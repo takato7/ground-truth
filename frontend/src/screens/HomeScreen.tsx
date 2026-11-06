@@ -1,27 +1,40 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api/mockApi'
-import type { RiskPost, Stance, Trigger, TriggerResponses, User } from '../api/types'
+import type { Brief, RiskPost, Stance, Trigger, TriggerResponses, User } from '../api/types'
 import { ANSWER_SHORT, RISK_COPY, TRIGGER_COPY } from '../copy'
 import { ProgressMeter, Screen } from '../components'
+import { BriefCard } from './Briefs'
 
 const ORDER: Stance[] = ['more_severe', 'agree', 'less_severe', 'missing']
+type Unlocked = Extract<TriggerResponses, { locked: false }>
 
-/** Home: the briefing is always open. Peers' answers unlock per trigger once you've answered it. */
-export function HomeScreen({ user, post, justFinished, onStartSurvey }: {
-  user: User; post: RiskPost; justFinished?: boolean; onStartSurvey: () => void
+export function HomeScreen({ user, post, justFinished, onStartSurvey, onOpenBrief }: {
+  user: User; post: RiskPost; justFinished?: boolean; onStartSurvey: () => void; onOpenBrief: (b: Brief) => void
 }) {
   const [byTrigger, setByTrigger] = useState<Record<string, TriggerResponses>>({})
-  const [readMore, setReadMore] = useState(false)
+  const [briefs, setBriefs] = useState<Brief[]>([])
+  const [publishing, setPublishing] = useState(false)
   const isAcaps = user.role === 'acaps'
-  const copy = RISK_COPY[post.id]
+  const place = RISK_COPY[post.id]?.short ?? post.country
 
-  useEffect(() => {
+  const load = () => {
     Promise.all(post.triggers.map((t) => api.getResponses(user.id, t.id))).then((rs) =>
       setByTrigger(Object.fromEntries(post.triggers.map((t, i) => [t.id, rs[i]]))),
     )
-  }, [user.id, post])
+    api.listBriefs(user.id).then(setBriefs)
+  }
+  useEffect(load, [user.id, post])
 
+  const loaded = Object.keys(byTrigger).length === post.triggers.length
   const todo = post.triggers.filter((t) => byTrigger[t.id]?.locked).length
+
+  const publish = async () => {
+    setPublishing(true)
+    const b = await api.publishBrief(user.id)
+    setPublishing(false)
+    load()
+    onOpenBrief(b)
+  }
 
   return (
     <Screen>
@@ -30,93 +43,118 @@ export function HomeScreen({ user, post, justFinished, onStartSurvey }: {
         <span className="pill">{isAcaps ? 'ACAPS' : user.displayName}</span>
       </header>
 
-      {justFinished && <p className="thanks">Thanks. Here’s where your panel landed.</p>}
-
-      {!isAcaps && todo > 0 && (
+      {loaded && !isAcaps && todo > 0 && (
         <section className="card invite">
-          <p>ACAPS would like your read on {copy?.short ?? post.country}.</p>
+          <p>ACAPS would like your read on {place}.</p>
           <p className="muted small">{todo} quick {todo === 1 ? 'question' : 'questions'} · about {todo} min</p>
           <button className="primary" onClick={onStartSurvey}>Start</button>
         </section>
       )}
 
-      <section className="card">
-        <p className="eyebrow">{post.riskLevel} risk · {post.trend.toLowerCase()}</p>
-        <h2>{copy?.headline ?? post.title}</h2>
-        <p className={`small ${readMore ? '' : 'clamp'}`}>{post.latestUpdate.replace(/^\d{2}\/\d{2}\/\d{4}\s*/, '')}</p>
-        <button className="link" onClick={() => setReadMore((v) => !v)}>{readMore ? 'Less' : 'Latest update · read more'}</button>
-      </section>
+      {loaded && !isAcaps && todo < post.triggers.length && (
+        <YourStand post={post} byTrigger={byTrigger} justFinished={justFinished} />
+      )}
 
-      <h3>What ACAPS is watching</h3>
-      {post.triggers.map((t) => <TriggerRow key={t.id} trigger={t} data={byTrigger[t.id]} isAcaps={isAcaps} />)}
+      {isAcaps && loaded && (
+        <>
+          <h3>Panel this round</h3>
+          {post.triggers.map((t) => <PanelRow key={t.id} trigger={t} data={byTrigger[t.id] as Unlocked} />)}
+          <button className="primary" onClick={publish} disabled={publishing}>Close round and publish panel brief</button>
+          <p className="muted small">Publishes pooled numbers only. Triggers with fewer than 3 answers are left out.</p>
+        </>
+      )}
+
+      <h3 className="feed-title">Briefs · {place}</h3>
+      {briefs.map((b) => <BriefCard key={b.id} brief={b} onOpen={() => onOpenBrief(b)} />)}
+      {!isAcaps && loaded && todo === 0 && !briefs.some((b) => b.kind === 'panel' && b.date >= today()) && (
+        <p className="muted small">This round’s panel brief comes out when ACAPS closes the round.</p>
+      )}
     </Screen>
   )
 }
 
-function TriggerRow({ trigger, data, isAcaps }: { trigger: Trigger; data?: TriggerResponses; isAcaps: boolean }) {
+const today = () => new Date().toISOString().slice(0, 10)
+
+/** The personal bit: what you said, and how many peers said the same. */
+function YourStand({ post, byTrigger, justFinished }: { post: RiskPost; byTrigger: Record<string, TriggerResponses>; justFinished?: boolean }) {
   const [open, setOpen] = useState(false)
-  const copy = TRIGGER_COPY[trigger.id]
+  const rows = post.triggers.flatMap((t) => {
+    const d = byTrigger[t.id]
+    if (!d || d.locked) return []
+    const mine = d.responses.find((r) => r.isMine)
+    if (!mine) return []
+    const peers = d.responses.filter((r) => !r.isMine)
+    const same = peers.filter((r) => r.stance === mine.stance).length
+    return [{ t, d, mine, peers, same }]
+  })
+  if (!rows.length) return null
+  const line = (r: (typeof rows)[number]) => {
+    const short = (TRIGGER_COPY[r.t.id]?.short ?? r.t.title).toLowerCase()
+    const said = r.mine.stance === 'agree' ? `ACAPS has ${short} about right`
+      : r.mine.stance === 'missing' ? `something else is going on with ${short}`
+      : `${short} ${r.mine.stance === 'more_severe' ? 'are further along' : 'aren’t as far along'}`
+    return { said: `You said ${said}.`, peers: `${r.same} of your ${r.peers.length} peers said the same.` }
+  }
+  const first = line(rows[0])
+
   return (
-    <section className="card">
-      <h4>{copy?.short ?? trigger.title}</h4>
-      <ProgressMeter rate={trigger.completionRate} />
-
-      {data?.locked && (
-        <p className="muted small">{data.count} {data.count === 1 ? 'peer has' : 'peers have'} answered · answer to see their view</p>
-      )}
-
-      {data && !data.locked && (
-        data.count === 0 ? <p className="muted small">No answers yet</p> : (
-          <>
-            <p className="headline">{headline(data)}</p>
-            <div className="stack-bar" aria-hidden>
-              {ORDER.map((s) => data.aggregate.stances[s] > 0 && (
-                <span key={s} className={`seg seg-${s}`} style={{ flex: data.aggregate.stances[s] }} />
+    <section className="stand">
+      <p className="thanks">{justFinished ? 'Thanks. Your answers are in.' : 'Where you stood'}</p>
+      <p className="stand-line">{first.said} {first.peers}</p>
+      <button className="link" onClick={() => setOpen((v) => !v)}>{open ? 'Hide' : rows.length > 1 ? `See all ${rows.length} ›` : 'See your peers’ notes ›'}</button>
+      {open && rows.map((r) => {
+        const l = line(r)
+        return (
+          <div key={r.t.id} className="card">
+            <h4>{TRIGGER_COPY[r.t.id]?.short ?? r.t.title}</h4>
+            <p className="small">{l.said} {l.peers}</p>
+            {!r.d.aggregate.split || <p className="muted small">Your panel was divided on this one.</p>}
+            <ul className="reasons">
+              {r.peers.filter((p) => p.reason).map((p) => (
+                <li key={p.id}><span className="who">{p.displayName}</span> · {ANSWER_SHORT[p.stance]}<p>{p.reason}</p></li>
               ))}
-            </div>
-            <p className="legend">
-              {ORDER.filter((s) => data.aggregate.stances[s]).map((s) => (
-                <span key={s}><i className={`dot seg-${s}`} />{data.aggregate.stances[s]} {ANSWER_SHORT[s]}</span>
-              ))}
-            </p>
-            {isAcaps && (
-              <p className="muted small">
-                {data.aggregate.probability
-                  ? `Chance of reaching 100% in 6 months: median ${data.aggregate.probability.median}% (${data.aggregate.probability.min}–${data.aggregate.probability.max}%, n=${data.aggregate.probability.n})`
-                  : 'No estimates'}
-              </p>
-            )}
-            {data.responses.some((r) => r.reason) && (
-              <button className="link" onClick={() => setOpen((v) => !v)}>
-                {open ? 'Hide notes' : `Read ${data.responses.filter((r) => r.reason).length} notes`}
-              </button>
-            )}
-            {open && (
-              <ul className="reasons">
-                {data.responses.filter((r) => r.reason).map((r) => (
-                  <li key={r.id}>
-                    <span className="who">{r.displayName}</span> · {ANSWER_SHORT[r.stance]}
-                    <p>{r.reason}</p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </>
+            </ul>
+          </div>
         )
-      )}
+      })}
     </section>
   )
 }
 
-function headline(d: Extract<TriggerResponses, { locked: false }>): string {
-  const { stances, count, split } = d.aggregate
-  if (split) return `Your panel is split (${count} answers)`
-  const top = ORDER.reduce((a, b) => (stances[b] > stances[a] ? b : a))
-  const lead: Record<Stance, string> = {
-    more_severe: 'think it’s further along than ACAPS says',
-    agree: 'think ACAPS has it about right',
-    less_severe: 'think it’s not as far along',
-    missing: 'think something else is going on',
-  }
-  return `${stances[top]} of ${count} ${lead[top]}`
+/** ACAPS-only: the analyst's numbers. */
+function PanelRow({ trigger, data }: { trigger: Trigger; data: Unlocked }) {
+  const [open, setOpen] = useState(false)
+  const agg = data.aggregate
+  return (
+    <section className="card">
+      <h4>{TRIGGER_COPY[trigger.id]?.short ?? trigger.title} {agg.split && <span className="badge">split</span>}</h4>
+      <ProgressMeter rate={trigger.completionRate} />
+      {data.count === 0 ? <p className="muted small">No answers yet</p> : (
+        <>
+          <div className="stack-bar" aria-hidden>
+            {ORDER.map((s) => agg.stances[s] > 0 && <span key={s} className={`seg seg-${s}`} style={{ flex: agg.stances[s] }} />)}
+          </div>
+          <p className="legend">
+            {ORDER.filter((s) => agg.stances[s]).map((s) => <span key={s}><i className={`dot seg-${s}`} />{agg.stances[s]} {ANSWER_SHORT[s]}</span>)}
+          </p>
+          <p className="muted small">
+            {agg.probability
+              ? `Chance of reaching 100% in 6 months: median ${agg.probability.median}% (${agg.probability.min}–${agg.probability.max}%, n=${agg.probability.n})`
+              : 'No estimates'}
+          </p>
+          <button className="link" onClick={() => setOpen((v) => !v)}>{open ? 'Hide answers' : `All ${data.count} answers`}</button>
+          {open && (
+            <ul className="reasons">
+              {data.responses.map((r) => (
+                <li key={r.id}>
+                  <span className="who">{r.displayName}</span> · {ANSWER_SHORT[r.stance]}{r.probability !== null && ` · ${r.probability}%`}
+                  {r.reason && <p>{r.reason}</p>}
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      )}
+    </section>
+  )
 }

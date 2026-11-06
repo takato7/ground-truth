@@ -80,3 +80,16 @@ export const STANCE_LABEL: Record<Stance, string> = {
   less_severe: 'Less severe',
   missing: 'Something is missing',
 }
+
+/** Something in the briefs feed. Panel briefs only ever hold pooled numbers: no quotes, no aliases. */
+export interface Brief {
+  id: string
+  kind: 'panel' | 'update'
+  date: string // ISO
+  headline: string
+  body: string[]
+  /** Panel briefs: number of experts who took part. */
+  panelSize?: number
+  /** Marks seeded demo content. */
+  demo?: boolean
+}

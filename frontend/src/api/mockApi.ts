@@ -4,8 +4,10 @@
 // per viewer) are mimicked here so the UI behaves like the real thing.
 
 import r1043 from '../mocks/r1043.json'
+import { TRIGGER_COPY } from '../copy'
 import type {
   AnonymityLevel,
+  Brief,
   ResponseIn,
   RiskPost,
   Stance,
@@ -35,11 +37,12 @@ export const USERS: SeedUser[] = [
   { id: 'e6', role: 'expert', realName: 'Pieter van Loon', pseudonym: 'mist-cedar-wren', postAlias: 'swift-12', anonymity: 'per_post', inviteCode: 'CHAD-E6' },
 ]
 
-const STORE_KEY = 'gt-mock-v1'
+const STORE_KEY = 'gt-mock-v2'
 
 interface Store {
   anonymity: Record<string, AnonymityLevel>
   responses: (ResponseIn & { id: string; userId: string; round: number; createdAt: string })[]
+  briefs: Brief[]
 }
 
 // Peers e2-e6 have already answered, so the demo user (e1) sees "5 peers answered".
@@ -48,13 +51,28 @@ function seed(): Store {
     id: `${userId}-${triggerId}`, userId, triggerId, stance, probability, reason, round: 1, createdAt: '2026-10-02T09:00:00Z',
   })
   return {
+    briefs: [
+      {
+        id: 'b-update-0930', kind: 'update', date: '2026-09-30',
+        headline: 'Refugee arrivals up 20-fold as fighting in Darfur drives new displacement',
+        body: [(r1043 as RiskPost).latestUpdate.replace(/^\d{2}\/\d{2}\/\d{4}\s*/, '')],
+      },
+      {
+        id: 'b-panel-0915', kind: 'panel', date: '2026-09-15', panelSize: 5, demo: true,
+        headline: 'Experts expect the August strikes to be repeated',
+        body: [
+          'Cross-border attacks: 4 of 5 experts judged them further along than ACAPS’s rating at the time.',
+          'Attacks on airports and bases: most experts agreed with ACAPS’s rating.',
+        ],
+      },
+    ],
     anonymity: Object.fromEntries(USERS.map((u) => [u.id, u.anonymity])),
     responses: [
       r('e2', 'T0618', 'more_severe', 70, 'Strikes near Tiné resumed in October; the September lull was rainy-season access, not de-escalation.'),
       r('e3', 'T0618', 'agree', 55, 'Pattern is still episodic, not sustained. 40% feels right.'),
       r('e4', 'T0618', 'more_severe', 65, 'Fuel market strike shows intent to hit civilian economic targets.'),
       r('e5', 'T0618', 'missing', null, 'Missing: Zaghawa defections inside Chadian army units around Amdjarass.'),
-      r('e6', 'T0618', 'agree', 50, ''),
+      r('e6', 'T0618', 'more_severe', 60, ''),
       r('e2', 'T0619', 'agree', 20, 'Threats are rhetorical so far; no capability shift observed.'),
       r('e3', 'T0619', 'less_severe', 10, 'Amdjarass is heavily defended since August.'),
       r('e4', 'T0619', 'more_severe', 35, 'The 21 Aug convoy strike 100km inside Ennedi-Est is close to infrastructure.'),
@@ -172,6 +190,56 @@ export const api = {
     store.responses.push({ ...body, id: `${u.id}-${body.triggerId}`, userId: u.id, round: 1, createdAt: new Date().toISOString() })
     save(store)
     await delay(null)
+  },
+
+  /** GET /briefs — newest first. Everyone sees the same feed. */
+  async listBriefs(userId: string): Promise<Brief[]> {
+    requireUser(userId)
+    return delay([...store.briefs].sort((a, b) => b.date.localeCompare(a.date)))
+  },
+
+  /**
+   * POST /briefs — ACAPS closes the round and publishes a panel brief.
+   * Deterministic template over pooled numbers only. Triggers with fewer than
+   * 3 answers are left out so nobody's answer can be singled out.
+   */
+  async publishBrief(userId: string): Promise<Brief> {
+    const u = requireUser(userId)
+    if (u.role !== 'acaps') throw new ApiError(403, 'Only ACAPS can publish')
+    const post = r1043 as RiskPost
+    const lines: string[] = []
+    let best: { short: string; stance: Stance; share: number } | null = null
+    let divided: string | null = null
+    for (const t of post.triggers) {
+      const rs = store.responses.filter((r) => r.triggerId === t.id)
+      const short = TRIGGER_COPY[t.id]?.short ?? t.title
+      if (rs.length < 3) { lines.push(`${short}: too few answers to report.`); continue }
+      const agg = aggregate(rs)
+      const top = (Object.keys(agg.stances) as Stance[]).reduce((a, b) => (agg.stances[b] > agg.stances[a] ? b : a))
+      const n = agg.stances[top]
+      const phrase: Record<Stance, string> = {
+        agree: 'agreed with ACAPS’s rating',
+        more_severe: 'judged this further along than ACAPS’s rating',
+        less_severe: 'judged this less far along than ACAPS’s rating',
+        missing: 'pointed to factors the analysis is missing',
+      }
+      if (agg.split && !divided) divided = short
+      lines.push(agg.split ? `${short}: experts were divided.` : `${short}: ${n} of ${rs.length} experts ${phrase[top]}.`)
+      const share = top === 'agree' || agg.split ? 0 : n / rs.length
+      if (!best || share > best.share) best = { short, stance: top, share }
+    }
+    const headline = best && best.share > 0
+      ? best.stance === 'more_severe' ? `Experts see ${best.short.toLowerCase()} as further along than ACAPS’s rating`
+        : best.stance === 'less_severe' ? `Experts see ${best.short.toLowerCase()} as less advanced than ACAPS’s rating`
+        : `Experts flag gaps in the analysis of ${best.short.toLowerCase()}`
+      : divided ? `Experts are divided on ${divided.toLowerCase()}`
+      : 'Experts broadly agree with ACAPS’s current ratings'
+    const panelSize = new Set(store.responses.map((r) => r.userId)).size
+    lines.push('ACAPS will review its trigger ratings in light of this round.')
+    const brief: Brief = { id: `b-panel-${Date.now()}`, kind: 'panel', date: new Date().toISOString().slice(0, 10), headline, body: lines, panelSize }
+    store.briefs.push(brief)
+    save(store)
+    return delay(brief)
   },
 
   /** Dev only: wipe local state back to the seed. */

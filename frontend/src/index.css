@@ -127,3 +127,28 @@ p { margin: 0 0 8px; line-height: 1.45; }
 @keyframes slide-fwd { from { opacity: 0; transform: translateX(32px); } to { opacity: 1; transform: none; } }
 @keyframes slide-back { from { opacity: 0; transform: translateX(-32px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .slide-fwd, .slide-back { animation: none; } }
+
+/* --- v4: briefs --- */
+.stand { display: flex; flex-direction: column; gap: 8px; }
+.stand-line { font-size: 17px; line-height: 1.4; margin: 0; }
+.feed-title { margin-top: 24px; }
+.brief { gap: 8px; }
+.brief-panel { background: #f4f4f4; color: #333; }
+.brief-panel .eyebrow, .brief-panel .muted { color: #777; }
+.brief-panel .chip { background: #e2e2e2; color: #333; }
+.brief-head { font-size: 17px; line-height: 1.3; margin: 0; }
+.brief-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.brief-screen .brief-actions { flex-direction: column; }
+.doc { background: #fff; color: #222; border-radius: 12px; padding: 24px 20px; display: flex; flex-direction: column; gap: 10px; }
+.doc .eyebrow { color: #777; }
+.doc-brand { font-size: 22px; color: #4a4a4a; margin: 0; }
+.doc-head { font-size: 22px; text-align: left; font-weight: 500; line-height: 1.3; }
+.doc p { font-size: 15px; }
+.doc-credit { color: #555; font-size: 13px !important; border-top: 1px solid #ddd; padding-top: 10px; }
+.doc-fine { color: #888; font-size: 12px !important; }
+@media print {
+  body, .shell { background: #fff; padding: 0; }
+  .phone { background: #fff; max-width: none; min-height: 0; border-radius: 0; }
+  .no-print, .devbar { display: none !important; }
+  .doc { padding: 0; }
+}
