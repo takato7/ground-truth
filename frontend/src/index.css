@@ -182,3 +182,16 @@ p { margin: 0 0 8px; line-height: 1.45; }
 .pill-btn:hover { background: rgba(255,255,255,0.28); }
 .doc-actions { justify-content: flex-start; }
 .doc-actions .pill-btn { flex: 0 0 auto; }
+
+/* --- v7: card types + rating control --- */
+.kind-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 7px; vertical-align: 1px; }
+.kind-ask { background: #fff; }
+.kind-panel { background: #d9d9d9; box-shadow: 0 0 0 2px rgba(255,255,255,0.35); }
+.kind-rating { background: transparent; border: 2px solid #fff; width: 6px; height: 6px; }
+.kind-update { background: #5f5f5f; }
+.pill-strong { background: #fff; color: #555; font-weight: 500; }
+.pill-strong:hover { background: #f0f0f0; }
+.rate-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.rate-row .pill-btn { padding: 6px 12px; }
+.rate-val { min-width: 40px; text-align: center; }
+.rate-check { display: flex; align-items: center; gap: 4px; }

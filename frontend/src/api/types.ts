@@ -84,7 +84,7 @@ export const STANCE_LABEL: Record<Stance, string> = {
 /** Something in the briefs feed. Panel briefs only ever hold pooled numbers: no quotes, no aliases. */
 export interface Brief {
   id: string
-  kind: 'panel' | 'update'
+  kind: 'panel' | 'update' | 'rating'
   date: string // ISO
   headline: string
   body: string[]

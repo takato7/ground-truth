@@ -58,7 +58,7 @@ export default function App() {
   } else if (step.name === 'brief') {
     screen = <BriefScreen brief={step.brief} autoPrint={step.print} onBack={() => setStep({ name: 'home' })} />
   } else {
-    screen = <HomeScreen key={refresh} user={user} post={post} justFinished={step.justFinished} onStartSurvey={next} onOpenBrief={(brief, print) => { window.scrollTo(0, 0); setStep({ name: 'brief', brief, print }) }} />
+    screen = <HomeScreen key={refresh} user={user} post={post} justFinished={step.justFinished} onStartSurvey={next} onPostChanged={() => api.getPost(user.id).then(setPost)} onOpenBrief={(brief, print) => { window.scrollTo(0, 0); setStep({ name: 'brief', brief, print }) }} />
   }
 
   return (

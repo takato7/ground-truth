@@ -37,12 +37,14 @@ export const USERS: SeedUser[] = [
   { id: 'e6', role: 'expert', realName: 'Pieter van Loon', pseudonym: 'mist-cedar-wren', postAlias: 'swift-12', anonymity: 'per_post', inviteCode: 'CHAD-E6' },
 ]
 
-const STORE_KEY = 'gt-mock-v2'
+const STORE_KEY = 'gt-mock-v3'
 
 interface Store {
   anonymity: Record<string, AnonymityLevel>
   responses: (ResponseIn & { id: string; userId: string; round: number; createdAt: string })[]
   briefs: Brief[]
+  /** Rating changes ACAPS made in the app, per trigger. The CSV is never touched. */
+  ratings: Record<string, { date: string; rate: number }[]>
 }
 
 // Peers e2-e6 have already answered, so the demo user (e1) sees "5 peers answered".
@@ -51,6 +53,7 @@ function seed(): Store {
     id: `${userId}-${triggerId}`, userId, triggerId, stance, probability, reason, round: 1, createdAt: '2026-10-02T09:00:00Z',
   })
   return {
+    ratings: {},
     briefs: [
       {
         id: 'b-update-0930', kind: 'update', date: '2026-09-30',
@@ -159,7 +162,15 @@ export const api = {
   /** GET /posts/R1043 */
   async getPost(userId: string): Promise<RiskPost> {
     requireUser(userId)
-    return delay(r1043 as RiskPost)
+    const base = r1043 as RiskPost
+    return delay({
+      ...base,
+      triggers: base.triggers.map((t) => {
+        const changes = store.ratings[t.id] ?? []
+        if (!changes.length) return t
+        return { ...t, completionRate: changes[changes.length - 1].rate, completionHistory: [...t.completionHistory, ...changes] }
+      }),
+    })
   },
 
   /** GET /triggers/:id/responses — enforces answer-first. */
@@ -195,7 +206,8 @@ export const api = {
   /** GET /briefs — newest first. Everyone sees the same feed. */
   async listBriefs(userId: string): Promise<Brief[]> {
     requireUser(userId)
-    return delay([...store.briefs].sort((a, b) => b.date.localeCompare(a.date)))
+    // Newest first; same-day items keep publish order (latest on top).
+    return delay(store.briefs.map((b, i) => ({ b, i })).sort((x, y) => y.b.date.localeCompare(x.b.date) || y.i - x.i).map((x) => x.b))
   },
 
   /**
@@ -237,6 +249,35 @@ export const api = {
     const panelSize = new Set(store.responses.map((r) => r.userId)).size
     lines.push('ACAPS will review its trigger ratings in light of this round.')
     const brief: Brief = { id: `b-panel-${Date.now()}`, kind: 'panel', date: new Date().toISOString().slice(0, 10), headline, body: lines, panelSize }
+    store.briefs.push(brief)
+    save(store)
+    return delay(brief)
+  },
+
+  /**
+   * POST /triggers/:id/rating — ACAPS updates a trigger's progress, optionally
+   * flagged as informed by the panel. Shows up in everyone's feed.
+   */
+  async updateRating(userId: string, triggerId: string, rate: number, informedByPanel: boolean): Promise<Brief> {
+    const u = requireUser(userId)
+    if (u.role !== 'acaps') throw new ApiError(403, 'Only ACAPS can change ratings')
+    if (rate < 0 || rate > 100 || rate % 5) throw new ApiError(422, 'Rating must be 0-100 in steps of 5')
+    const post = await this.getPost(userId)
+    const t = post.triggers.find((x) => x.id === triggerId)
+    if (!t) throw new ApiError(404, 'Unknown trigger')
+    const from = t.completionRate
+    const date = new Date().toISOString().slice(0, 10)
+    ;(store.ratings[triggerId] ??= []).push({ date, rate })
+    const copy = TRIGGER_COPY[triggerId] ?? { short: t.title, goal: 'its 100% condition' }
+    const verb = from === null ? 'rated' : rate > from ? 'raised its rating for' : rate < from ? 'lowered its rating for' : 'confirmed its rating for'
+    const brief: Brief = {
+      id: `b-rating-${Date.now()}`, kind: 'rating', date,
+      headline: `ACAPS ${verb} ${copy.short.toLowerCase()}`,
+      body: [
+        `${copy.short}: ${from === null ? 'not rated' : `${from}%`} → ${rate}% of the way to ${copy.goal}.`,
+        informedByPanel ? 'This change was informed by the expert panel’s latest round.' : 'Based on ACAPS’s own monitoring.',
+      ],
+    }
     store.briefs.push(brief)
     save(store)
     return delay(brief)

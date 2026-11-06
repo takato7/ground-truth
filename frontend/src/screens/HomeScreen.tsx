@@ -3,13 +3,13 @@ import { api } from '../api/mockApi'
 import type { Brief, RiskPost, Stance, Trigger, TriggerResponses, User } from '../api/types'
 import { ANSWER_SHORT, RISK_COPY, TRIGGER_COPY } from '../copy'
 import { ProgressMeter, Screen } from '../components'
-import { BriefCard } from './Briefs'
+import { BriefCard, AskCard } from './Briefs'
 
 const ORDER: Stance[] = ['more_severe', 'agree', 'less_severe', 'missing']
 type Unlocked = Extract<TriggerResponses, { locked: false }>
 
-export function HomeScreen({ user, post, justFinished, onStartSurvey, onOpenBrief }: {
-  user: User; post: RiskPost; justFinished?: boolean; onStartSurvey: () => void; onOpenBrief: (b: Brief, print?: boolean) => void
+export function HomeScreen({ user, post, justFinished, onStartSurvey, onOpenBrief, onPostChanged }: {
+  user: User; post: RiskPost; justFinished?: boolean; onStartSurvey: () => void; onOpenBrief: (b: Brief, print?: boolean) => void; onPostChanged: () => void
 }) {
   const [byTrigger, setByTrigger] = useState<Record<string, TriggerResponses>>({})
   const [briefs, setBriefs] = useState<Brief[]>([])
@@ -43,14 +43,6 @@ export function HomeScreen({ user, post, justFinished, onStartSurvey, onOpenBrie
         <span className="pill">{isAcaps ? 'ACAPS' : user.displayName}</span>
       </header>
 
-      {loaded && !isAcaps && todo > 0 && (
-        <section className="card invite">
-          <p>ACAPS would like your read on {place}.</p>
-          <p className="muted small">{todo} quick {todo === 1 ? 'question' : 'questions'} · about {todo} min</p>
-          <button className="primary" onClick={onStartSurvey}>Start</button>
-        </section>
-      )}
-
       {loaded && !isAcaps && todo < post.triggers.length && (
         <YourStand post={post} byTrigger={byTrigger} justFinished={justFinished} />
       )}
@@ -58,13 +50,18 @@ export function HomeScreen({ user, post, justFinished, onStartSurvey, onOpenBrie
       {isAcaps && loaded && (
         <>
           <h3>Panel this round</h3>
-          {post.triggers.map((t) => <PanelRow key={t.id} trigger={t} data={byTrigger[t.id] as Unlocked} />)}
+          {post.triggers.map((t) => (
+            <PanelRow key={t.id} user={user} trigger={t} data={byTrigger[t.id] as Unlocked} onRated={() => { onPostChanged(); load() }} />
+          ))}
           <button className="primary" onClick={publish} disabled={publishing}>Close round and publish panel brief</button>
           <p className="muted small">Publishes pooled numbers only. Triggers with fewer than 3 answers are left out.</p>
         </>
       )}
 
       <div className="feed">
+      {loaded && !isAcaps && todo > 0 && (
+        <AskCard place={place} todo={todo} onStart={onStartSurvey} />
+      )}
       {briefs.map((b) => <BriefCard key={b.id} brief={b} onOpen={() => onOpenBrief(b)} onDownload={() => onOpenBrief(b, true)} />)}
       {!isAcaps && loaded && todo === 0 && !briefs.some((b) => b.kind === 'panel' && b.date >= today()) && (
         <p className="meta">This round’s brief comes out when ACAPS closes the round.</p>
@@ -123,13 +120,25 @@ function YourStand({ post, byTrigger, justFinished }: { post: RiskPost; byTrigge
 }
 
 /** ACAPS-only: the analyst's numbers. */
-function PanelRow({ trigger, data }: { trigger: Trigger; data: Unlocked }) {
+function PanelRow({ user, trigger, data, onRated }: { user: User; trigger: Trigger; data: Unlocked; onRated: () => void }) {
   const [open, setOpen] = useState(false)
+  const current = trigger.completionRate ?? 0
+  const [rate, setRate] = useState(current)
+  const [informed, setInformed] = useState(true)
+  useEffect(() => setRate(trigger.completionRate ?? 0), [trigger.completionRate])
+  const save = async () => { await api.updateRating(user.id, trigger.id, rate, informed); onRated() }
   const agg = data.aggregate
   return (
     <section className="card">
       <h4>{TRIGGER_COPY[trigger.id]?.short ?? trigger.title} {agg.split && <span className="badge">split</span>}</h4>
       <ProgressMeter rate={trigger.completionRate} />
+      <div className="rate-row">
+        <button className="pill-btn" onClick={() => setRate((r) => Math.max(0, r - 5))} aria-label="Lower rating">−</button>
+        <strong className="rate-val">{rate}%</strong>
+        <button className="pill-btn" onClick={() => setRate((r) => Math.min(100, r + 5))} aria-label="Raise rating">+</button>
+        <label className="meta rate-check"><input type="checkbox" checked={informed} onChange={(e) => setInformed(e.target.checked)} /> Informed by panel</label>
+        {rate !== current && <button className="pill-btn" onClick={save}>Update rating</button>}
+      </div>
       {data.count === 0 ? <p className="muted small">No answers yet</p> : (
         <>
           <div className="stack-bar" aria-hidden>

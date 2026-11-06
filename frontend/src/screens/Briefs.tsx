@@ -6,7 +6,13 @@ const fmt = (iso: string) => new Date(iso + 'T12:00:00').toLocaleDateString('en-
 const fmtLong = (iso: string) => new Date(iso + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
 
 /** One meta line for every kind of brief. */
-const meta = (b: Brief) => (b.kind === 'panel' ? `Panel brief · ${b.panelSize} experts · ${fmt(b.date)}` : `ACAPS update · ${fmt(b.date)}`)
+const meta = (b: Brief) =>
+  b.kind === 'panel' ? `Panel brief · ${b.panelSize} experts · ${fmt(b.date)}`
+  : b.kind === 'rating' ? `Rating change · ${fmt(b.date)}`
+  : `ACAPS update · ${fmt(b.date)}`
+
+/** Small type marker before the meta line. */
+const Kind = ({ kind }: { kind: string }) => <i className={`kind-dot kind-${kind}`} aria-hidden />
 const source = (b: Brief) => (b.kind === 'panel' ? `ACAPS expert panel, ${b.panelSize} experts, ${fmtLong(b.date)}` : `ACAPS, ${fmtLong(b.date)}`)
 
 /** Plain text for sharing. Pooled numbers only; nothing that identifies an expert. */
@@ -29,7 +35,7 @@ export function BriefCard({ brief, onOpen, onDownload }: { brief: Brief; onOpen:
   return (
     <article className="card brief">
       <button className="brief-tap" onClick={onOpen}>
-        <span className="meta">{meta(brief)}</span>
+        <span className="meta"><Kind kind={brief.kind} />{meta(brief)}</span>
         <span className="brief-head">{brief.headline}</span>
         <span className="brief-sum">{brief.body[0]}</span>
       </button>
@@ -37,6 +43,22 @@ export function BriefCard({ brief, onOpen, onDownload }: { brief: Brief; onOpen:
         <button className="pill-btn" onClick={onOpen}>Read</button>
         <button className="pill-btn" onClick={onDownload}>Download PDF</button>
         <button className="pill-btn" onClick={() => share(brief)}>Share</button>
+      </div>
+    </article>
+  )
+}
+
+/** The survey invite, in the same card shape as everything else in the feed. */
+export function AskCard({ place, todo, onStart }: { place: string; todo: number; onStart: () => void }) {
+  return (
+    <article className="card brief">
+      <button className="brief-tap" onClick={onStart}>
+        <span className="meta"><Kind kind="ask" />Your read · {todo} {todo === 1 ? 'question' : 'questions'} · about {todo} min</span>
+        <span className="brief-head">ACAPS would like your read on {place}</span>
+        <span className="brief-sum">Answer independently first, then see where your panel landed.</span>
+      </button>
+      <div className="pills">
+        <button className="pill-btn pill-strong" onClick={onStart}>Start</button>
       </div>
     </article>
   )
@@ -52,7 +74,7 @@ export function BriefScreen({ brief, onBack, autoPrint }: { brief: Brief; onBack
         <button className="back" onClick={onBack}>‹ Back</button>
       </header>
       <article className="doc">
-        <p className="meta">{meta(brief)}</p>
+        <p className="meta"><Kind kind={brief.kind} />{meta(brief)}</p>
         <h1 className="doc-head">{brief.headline}</h1>
         {brief.body.map((p, i) => <p key={i}>{p}</p>)}
         {brief.kind === 'panel' && (
