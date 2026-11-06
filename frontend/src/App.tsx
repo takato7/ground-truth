@@ -1,12 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { api, USERS } from './api/mockApi'
 import type { Brief, RiskPost, User } from './api/types'
 import { AnonymityScreen, InviteScreen } from './screens/Onboarding'
 import { TriggerScreen } from './screens/TriggerScreen'
 import { HomeScreen } from './screens/HomeScreen'
 import { BriefScreen } from './screens/Briefs'
-import { Drawer, Screen, Text } from './ui'
-import { MenuContent } from './screens/Menu'
+import { Screen, Text } from './ui'
 
 // invite → anonymity → survey (skippable, opens straight away if questions are waiting) → home.
 // Home is always reachable; only peers' answers stay hidden until you've answered.
@@ -24,11 +23,6 @@ export default function App() {
   const [post, setPost] = useState<RiskPost | null>(null)
   const [step, setStep] = useState<Step>({ name: 'invite' })
   const [refresh, setRefresh] = useState(0)
-  const [menuOpen, setMenuOpen] = useState(false)
-  const scroller = useRef<HTMLDivElement>(null)
-
-  // Every screen change starts at the top of the phone's scroll area.
-  useEffect(() => { scroller.current?.scrollTo(0, 0) }, [step])
 
   useEffect(() => {
     if (user) api.getPost(user.id).then(setPost)
@@ -65,19 +59,12 @@ export default function App() {
   } else if (step.name === 'brief') {
     screen = <BriefScreen brief={step.brief} autoPrint={step.print} onBack={() => setStep({ name: 'home' })} />
   } else {
-    screen = <HomeScreen key={refresh} user={user} post={post} justFinished={step.justFinished} onStartSurvey={next} onPostChanged={() => api.getPost(user.id).then(setPost)} onMenu={() => setMenuOpen(true)} onOpenBrief={(brief, print) => setStep({ name: 'brief', brief, print })} />
+    screen = <HomeScreen key={refresh} user={user} post={post} justFinished={step.justFinished} onStartSurvey={next} onPostChanged={() => api.getPost(user.id).then(setPost)} onOpenBrief={(brief, print) => { window.scrollTo(0, 0); setStep({ name: 'brief', brief, print }) }} />
   }
 
   return (
     <div className="shell">
-      <div className="phone">
-        <div className="phone-scroll" ref={scroller}>{screen}</div>
-        {user && (
-          <Drawer open={menuOpen} onClose={() => setMenuOpen(false)}>
-            <MenuContent user={user} onSignOut={() => { setMenuOpen(false); switchTo('') }} />
-          </Drawer>
-        )}
-      </div>
+      <div className="phone">{screen}</div>
       {/* Dev-only user switcher: replaces login for the demo. */}
       <div className="devbar">
         <select value={user?.id ?? ''} onChange={(e) => switchTo(e.target.value)}>

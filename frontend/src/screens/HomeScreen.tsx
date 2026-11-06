@@ -2,17 +2,17 @@ import { useEffect, useState } from 'react'
 import { api } from '../api/mockApi'
 import type { Brief, RiskPost, Stance, Trigger, TriggerResponses, User } from '../api/types'
 import { ANSWER_SHORT, RISK_COPY, TRIGGER_COPY } from '../copy'
-import { Avatar, Badge, Button, Card, IconButton, Link, Logo, MenuIcon, Meter, Notes, Row, Screen, Stack, StackBar, Text, Title, Toggle, TopBar, type Fill } from '../ui'
+import { Badge, Button, Card, Link, Logo, Meter, Notes, Row, Screen, Stack, StackBar, Text, ThemeToggle, Title, Toggle, TopBar, type Tone } from '../ui'
 import { AskCard, BriefCard } from './Briefs'
 
 const ORDER: Stance[] = ['more_severe', 'agree', 'less_severe', 'missing']
-const STANCE_FILL: Record<Stance, Fill> = { more_severe: 'accent', agree: 'ink', less_severe: 'mid', missing: 'faint' }
+const STANCE_TONE: Record<Stance, Tone> = { more_severe: 'rose', agree: 'mint', less_severe: 'sky', missing: 'butter' }
 type Unlocked = Extract<TriggerResponses, { locked: false }>
 const today = () => new Date().toISOString().slice(0, 10)
 const short = (t: Trigger) => TRIGGER_COPY[t.id]?.short ?? t.title
 
-export function HomeScreen({ user, post, justFinished, onStartSurvey, onOpenBrief, onPostChanged, onMenu }: {
-  user: User; post: RiskPost; justFinished?: boolean; onStartSurvey: () => void; onOpenBrief: (b: Brief, print?: boolean) => void; onPostChanged: () => void; onMenu: () => void
+export function HomeScreen({ user, post, justFinished, onStartSurvey, onOpenBrief, onPostChanged }: {
+  user: User; post: RiskPost; justFinished?: boolean; onStartSurvey: () => void; onOpenBrief: (b: Brief, print?: boolean) => void; onPostChanged: () => void
 }) {
   const [byTrigger, setByTrigger] = useState<Record<string, TriggerResponses>>({})
   const [briefs, setBriefs] = useState<Brief[]>([])
@@ -42,9 +42,9 @@ export function HomeScreen({ user, post, justFinished, onStartSurvey, onOpenBrie
   return (
     <Screen>
       <TopBar
-        left={<IconButton label="Menu" onClick={onMenu}><MenuIcon /></IconButton>}
+        left={<Text variant="meta">{isAcaps ? 'ACAPS analyst' : user.displayName}</Text>}
         center={<Logo />}
-        right={<Avatar onClick={onMenu} />}
+        right={<ThemeToggle />}
       />
 
       {loaded && !isAcaps && todo < post.triggers.length && (
@@ -95,7 +95,7 @@ function YourStand({ post, byTrigger, justFinished }: { post: RiskPost; byTrigge
 
   return (
     <Stack gap={3}>
-      <Card tone="soft" center>
+      <Card tone="lilac" center>
         {justFinished && <Text variant="meta">Thanks, your answers are in</Text>}
         <Title size="lg">{said(rows[0])}</Title>
         <Text>{peersLine(rows[0])}</Text>
@@ -138,7 +138,7 @@ function PanelRow({ user, trigger, data, onRated }: { user: User; trigger: Trigg
 
       {data.count === 0 ? <Text variant="meta">No answers yet</Text> : (
         <>
-          <StackBar parts={ORDER.map((s) => ({ label: ANSWER_SHORT[s], value: agg.stances[s], fill: STANCE_FILL[s] }))} />
+          <StackBar parts={ORDER.map((s) => ({ label: ANSWER_SHORT[s], value: agg.stances[s], tone: STANCE_TONE[s] }))} />
           <Text variant="meta">
             {agg.probability
               ? `Chance of reaching 100% in 6 months: median ${agg.probability.median}% (${agg.probability.min}–${agg.probability.max}%, n=${agg.probability.n})`
