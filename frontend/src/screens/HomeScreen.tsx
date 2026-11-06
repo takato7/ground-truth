@@ -64,11 +64,12 @@ export function HomeScreen({ user, post, justFinished, onStartSurvey, onOpenBrie
         </>
       )}
 
-      <h3 className="feed-title">Briefs · {place}</h3>
+      <div className="feed">
       {briefs.map((b) => <BriefCard key={b.id} brief={b} onOpen={() => onOpenBrief(b)} />)}
       {!isAcaps && loaded && todo === 0 && !briefs.some((b) => b.kind === 'panel' && b.date >= today()) && (
-        <p className="muted small">This round’s panel brief comes out when ACAPS closes the round.</p>
+        <p className="meta">This round’s brief comes out when ACAPS closes the round.</p>
       )}
+      </div>
     </Screen>
   )
 }
@@ -99,7 +100,7 @@ function YourStand({ post, byTrigger, justFinished }: { post: RiskPost; byTrigge
 
   return (
     <section className="stand">
-      <p className="thanks">{justFinished ? 'Thanks. Your answers are in.' : 'Where you stood'}</p>
+      {justFinished && <p className="meta">Thanks, your answers are in.</p>}
       <p className="stand-line">{first.said} {first.peers}</p>
       <button className="link" onClick={() => setOpen((v) => !v)}>{open ? 'Hide' : rows.length > 1 ? `See all ${rows.length} ›` : 'See your peers’ notes ›'}</button>
       {open && rows.map((r) => {
