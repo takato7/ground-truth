@@ -5,7 +5,6 @@ import { AnonymityScreen, InviteScreen } from './screens/Onboarding'
 import { TriggerScreen } from './screens/TriggerScreen'
 import { HomeScreen } from './screens/HomeScreen'
 import { BriefScreen } from './screens/Briefs'
-import { Screen, Text } from './ui'
 
 // invite → anonymity → survey (skippable, opens straight away if questions are waiting) → home.
 // Home is always reachable; only peers' answers stay hidden until you've answered.
@@ -53,7 +52,7 @@ export default function App() {
   } else if (step.name === 'anonymity') {
     screen = <AnonymityScreen user={user} onDone={enter} />
   } else if (!post) {
-    screen = <Screen center><Text center>Loading…</Text></Screen>
+    screen = <main className="screen center"><p className="muted">Loading…</p></main>
   } else if (step.name === 'survey') {
     screen = <TriggerScreen user={user} post={post} index={step.index} onNext={next} onSkip={() => setStep({ name: 'home' })} />
   } else if (step.name === 'brief') {
