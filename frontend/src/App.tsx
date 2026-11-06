@@ -8,7 +8,7 @@ import { BriefScreen } from './screens/Briefs'
 
 // invite → anonymity → survey (skippable, opens straight away if questions are waiting) → home.
 // Home is always reachable; only peers' answers stay hidden until you've answered.
-type Step = { name: 'invite' } | { name: 'anonymity' } | { name: 'survey'; index: number } | { name: 'home'; justFinished?: boolean } | { name: 'brief'; brief: Brief }
+type Step = { name: 'invite' } | { name: 'anonymity' } | { name: 'survey'; index: number } | { name: 'home'; justFinished?: boolean } | { name: 'brief'; brief: Brief; print?: boolean }
 
 /** Indexes of triggers this expert hasn't answered yet. */
 async function pending(user: User, post: RiskPost): Promise<number[]> {
@@ -56,9 +56,9 @@ export default function App() {
   } else if (step.name === 'survey') {
     screen = <TriggerScreen user={user} post={post} index={step.index} onNext={next} onSkip={() => setStep({ name: 'home' })} />
   } else if (step.name === 'brief') {
-    screen = <BriefScreen brief={step.brief} onBack={() => setStep({ name: 'home' })} />
+    screen = <BriefScreen brief={step.brief} autoPrint={step.print} onBack={() => setStep({ name: 'home' })} />
   } else {
-    screen = <HomeScreen key={refresh} user={user} post={post} justFinished={step.justFinished} onStartSurvey={next} onOpenBrief={(brief) => { window.scrollTo(0, 0); setStep({ name: 'brief', brief }) }} />
+    screen = <HomeScreen key={refresh} user={user} post={post} justFinished={step.justFinished} onStartSurvey={next} onOpenBrief={(brief, print) => { window.scrollTo(0, 0); setStep({ name: 'brief', brief, print }) }} />
   }
 
   return (

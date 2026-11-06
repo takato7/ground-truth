@@ -9,7 +9,7 @@ const ORDER: Stance[] = ['more_severe', 'agree', 'less_severe', 'missing']
 type Unlocked = Extract<TriggerResponses, { locked: false }>
 
 export function HomeScreen({ user, post, justFinished, onStartSurvey, onOpenBrief }: {
-  user: User; post: RiskPost; justFinished?: boolean; onStartSurvey: () => void; onOpenBrief: (b: Brief) => void
+  user: User; post: RiskPost; justFinished?: boolean; onStartSurvey: () => void; onOpenBrief: (b: Brief, print?: boolean) => void
 }) {
   const [byTrigger, setByTrigger] = useState<Record<string, TriggerResponses>>({})
   const [briefs, setBriefs] = useState<Brief[]>([])
@@ -65,7 +65,7 @@ export function HomeScreen({ user, post, justFinished, onStartSurvey, onOpenBrie
       )}
 
       <div className="feed">
-      {briefs.map((b) => <BriefCard key={b.id} brief={b} onOpen={() => onOpenBrief(b)} />)}
+      {briefs.map((b) => <BriefCard key={b.id} brief={b} onOpen={() => onOpenBrief(b)} onDownload={() => onOpenBrief(b, true)} />)}
       {!isAcaps && loaded && todo === 0 && !briefs.some((b) => b.kind === 'panel' && b.date >= today()) && (
         <p className="meta">This round’s brief comes out when ACAPS closes the round.</p>
       )}
