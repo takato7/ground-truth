@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { api, ApiError } from '../api/mockApi'
 import type { RiskPost, Stance, User } from '../api/types'
 import { ANSWER, LIKELIHOOD, TRIGGER_COPY, askLine } from '../copy'
-import { Screen } from '../components'
+import { Button, ErrorText, Link, Screen, Stack, Steps, Text, TextArea, Title, TopBar } from '../ui'
 
 const MAIN: Stance[] = ['agree', 'more_severe', 'less_severe']
 const STEPS = 3 // 1 stance · 2 likelihood · 3 note
@@ -44,55 +44,58 @@ export function TriggerScreen({ user, post, index, onNext, onSkip }: {
 
   return (
     <Screen className="survey">
-      <header className="topbar">
-        {sub > 0 ? <button className="back" onClick={back}>‹ Back</button> : <span />}
-        <button className="link" onClick={onSkip}>Later</button>
-      </header>
-      <div className="tabs" aria-label={`Topic ${index + 1} of ${post.triggers.length}`}>
-        {post.triggers.map((t, i) => <span key={t.id} className={i < index ? 'done' : i === index ? 'on' : ''} />)}
-      </div>
+      <TopBar
+        left={sub > 0 && <Button variant="ghost" onClick={back}>‹ Back</Button>}
+        right={<Button variant="ghost" onClick={onSkip}>Later</Button>}
+      />
+      <Steps count={post.triggers.length} current={index} />
 
-      <div key={`${trigger.id}-${sub}`} className={`page slide-${dir}`}>
-        <p className="step">{copy.short} · {sub + 1}/{STEPS}</p>
+      <div key={`${trigger.id}-${sub}`} className={`survey-page ui-slide-${dir}`}>
+        <Stack gap={5}>
+          <Text variant="meta">{copy.short} · {sub + 1}/{STEPS}</Text>
 
-        {sub === 0 && (
-          <>
-            <h1 className="q-ask">{askLine(copy.short, trigger.completionRate, copy.goal)}</h1>
-            <div className="choices">
-              {MAIN.map((s) => (
-                <button key={s} className={`choice ${stance === s ? 'selected' : ''}`} onClick={() => { setStance(s); advance() }}>{ANSWER[s]}</button>
-              ))}
-              <button className={`link center-link ${stance === 'missing' ? 'on' : ''}`} onClick={() => { setStance('missing'); advance() }}>{ANSWER.missing}</button>
-            </div>
-            <button className="link wording" onClick={() => setShowWording((v) => !v)}>{showWording ? 'Hide' : 'ACAPS’s wording'}</button>
-            {showWording && (
-              <div className="small muted">
-                <p><strong>{trigger.title}</strong></p>
-                <p>100% means: {trigger.quantitativeObjective}</p>
-              </div>
-            )}
-          </>
-        )}
+          {sub === 0 && (
+            <>
+              <Title>{askLine(copy.short, trigger.completionRate, copy.goal)}</Title>
+              <Stack gap={2}>
+                {MAIN.map((s) => (
+                  <Button key={s} variant="choice" selected={stance === s} onClick={() => { setStance(s); advance() }}>{ANSWER[s]}</Button>
+                ))}
+                <Button variant="ghost" selected={stance === 'missing'} onClick={() => { setStance('missing'); advance() }}>{ANSWER.missing}</Button>
+              </Stack>
+              <Stack gap={2}>
+                <Link onClick={() => setShowWording((v) => !v)}>{showWording ? 'Hide ACAPS’s wording' : 'ACAPS’s wording'}</Link>
+                {showWording && (
+                  <>
+                    <Text variant="lead">{trigger.title}</Text>
+                    <Text>100% means: {trigger.quantitativeObjective}</Text>
+                  </>
+                )}
+              </Stack>
+            </>
+          )}
 
-        {sub === 1 && (
-          <>
-            <h1 className="q-ask">{copy.reach}</h1>
-            <div className="choices">
-              {LIKELIHOOD.map((l) => (
-                <button key={l.label} className={`choice ${prob === l.value ? 'selected' : ''} ${l.value === null ? 'quiet' : ''}`} onClick={() => { setProb(l.value); advance() }}>{l.label}</button>
-              ))}
-            </div>
-          </>
-        )}
+          {sub === 1 && (
+            <>
+              <Title>{copy.reach}</Title>
+              <Stack gap={2}>
+                {LIKELIHOOD.map((l) => l.value === null
+                  ? <Button key={l.label} variant="ghost" onClick={() => { setProb(null); advance() }}>{l.label}</Button>
+                  : <Button key={l.label} variant="choice" selected={prob === l.value} onClick={() => { setProb(l.value); advance() }}>{l.label}</Button>,
+                )}
+              </Stack>
+            </>
+          )}
 
-        {sub === 2 && (
-          <>
-            <h1 className="q-ask">{stance === 'missing' ? 'What are we missing?' : 'Anything you’d add?'}</h1>
-            <textarea className="field" rows={4} maxLength={280} autoFocus value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional. Seen by your panel under your chosen name." />
-            {error && <p className="error">{error}</p>}
-            <button className="primary" onClick={submit}>{note.trim() ? 'Send' : 'Skip and send'}</button>
-          </>
-        )}
+          {sub === 2 && (
+            <>
+              <Title>{stance === 'missing' ? 'What are we missing?' : 'Anything you’d add?'}</Title>
+              <TextArea rows={4} max={280} autoFocus value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional. Seen by your panel under your chosen name." />
+              {error && <ErrorText>{error}</ErrorText>}
+              <Button variant="primary" size="lg" block onClick={submit}>{note.trim() ? 'Send' : 'Skip and send'}</Button>
+            </>
+          )}
+        </Stack>
       </div>
     </Screen>
   )

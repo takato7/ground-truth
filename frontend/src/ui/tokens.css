@@ -1,0 +1,97 @@
+/*
+ * Design tokens. Two layers:
+ *  1. Scales: a 12-step grey (1 = app background … 12 = strongest text) and five
+ *     highlighter tints, each with a light bg and a stronger "dot" shade.
+ *  2. Semantic aliases that components use. Components never use raw scale steps
+ *     except through these.
+ * Light is default; dark comes from the OS or from data-theme on <html>.
+ */
+
+:root {
+  /* Grey scale, light. Slightly cool, like paper under a lavender light. */
+  --gray-1: #fcfcfd;
+  --gray-2: #f5f4f7;
+  --gray-3: #eeedf1;
+  --gray-4: #e7e6eb;
+  --gray-5: #e0dfe5;
+  --gray-6: #d8d7de;
+  --gray-7: #cccad3;
+  --gray-8: #b5b3be;
+  --gray-9: #8b8994;
+  --gray-10: #7f7d88;
+  --gray-11: #63616b;
+  --gray-12: #26252b;
+
+  /* Highlighter tints: soft card fill + a stronger shade for dots and bars. */
+  --rose: #ffe1de;    --rose-dot: #f0a19b;
+  --butter: #fdf9dc;  --butter-dot: #e3cf5e;
+  --mint: #def4e5;    --mint-dot: #86cf9f;
+  --sky: #ddeefc;     --sky-dot: #86bdea;
+  --lilac: #ebe5fd;   --lilac-dot: #b3a0ee;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --gray-1: #111113; --gray-2: #18181b; --gray-3: #202024; --gray-4: #28282d;
+    --gray-5: #2f2f35; --gray-6: #39393f; --gray-7: #47464e; --gray-8: #5f5e67;
+    --gray-9: #6e6d77; --gray-10: #7c7b85; --gray-11: #b3b1bc; --gray-12: #eeedf2;
+    --rose: #3a2627;   --rose-dot: #d98c86;
+    --butter: #322f1c; --butter-dot: #cdb94f;
+    --mint: #1d3127;   --mint-dot: #6fbd8b;
+    --sky: #1b2b39;    --sky-dot: #72a9d6;
+    --lilac: #29243d;  --lilac-dot: #9d8ae0;
+    color-scheme: dark;
+  }
+}
+:root[data-theme='dark'] {
+  --gray-1: #111113; --gray-2: #18181b; --gray-3: #202024; --gray-4: #28282d;
+  --gray-5: #2f2f35; --gray-6: #39393f; --gray-7: #47464e; --gray-8: #5f5e67;
+  --gray-9: #6e6d77; --gray-10: #7c7b85; --gray-11: #b3b1bc; --gray-12: #eeedf2;
+  --rose: #3a2627;   --rose-dot: #d98c86;
+  --butter: #322f1c; --butter-dot: #cdb94f;
+  --mint: #1d3127;   --mint-dot: #6fbd8b;
+  --sky: #1b2b39;    --sky-dot: #72a9d6;
+  --lilac: #29243d;  --lilac-dot: #9d8ae0;
+  color-scheme: dark;
+}
+
+:root {
+  /* Semantic aliases. */
+  --bg: var(--gray-2);            /* app background */
+  --surface: var(--gray-1);       /* plain cards */
+  --surface-sunken: var(--gray-3);/* inputs, tracks */
+  --border: var(--gray-5);
+  --border-strong: var(--gray-7);
+  --text: var(--gray-12);
+  --text-muted: var(--gray-11);
+  --text-faint: var(--gray-9);
+  --primary: var(--gray-12);      /* dark pill */
+  --on-primary: var(--gray-1);
+  --soft: var(--gray-3);          /* secondary pill */
+  --soft-hover: var(--gray-4);
+  --danger: #c2453d;
+
+  /* Type. System fonts only: the app makes no network calls. */
+  --font-sans: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-serif: 'Iowan Old Style', 'New York', ui-serif, Georgia, serif;
+  --text-xs: 13px;
+  --text-sm: 15px;
+  --text-md: 17px;
+  --text-lg: 22px;
+  --text-xl: 30px;
+
+  /* Shape and space. */
+  --radius-sm: 12px;
+  --radius-md: 20px;
+  --radius-lg: 28px;
+  --radius-pill: 999px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --shadow: 0 1px 2px rgba(20, 18, 30, 0.04), 0 8px 24px rgba(20, 18, 30, 0.05);
+}

@@ -2,11 +2,14 @@ import { useEffect, useState } from 'react'
 import { api } from '../api/mockApi'
 import type { Brief, RiskPost, Stance, Trigger, TriggerResponses, User } from '../api/types'
 import { ANSWER_SHORT, RISK_COPY, TRIGGER_COPY } from '../copy'
-import { ProgressMeter, Screen } from '../components'
-import { BriefCard, AskCard } from './Briefs'
+import { Badge, Button, Card, Link, Logo, Meter, Notes, Row, Screen, Stack, StackBar, Text, ThemeToggle, Title, Toggle, TopBar, type Tone } from '../ui'
+import { AskCard, BriefCard } from './Briefs'
 
 const ORDER: Stance[] = ['more_severe', 'agree', 'less_severe', 'missing']
+const STANCE_TONE: Record<Stance, Tone> = { more_severe: 'rose', agree: 'mint', less_severe: 'sky', missing: 'butter' }
 type Unlocked = Extract<TriggerResponses, { locked: false }>
+const today = () => new Date().toISOString().slice(0, 10)
+const short = (t: Trigger) => TRIGGER_COPY[t.id]?.short ?? t.title
 
 export function HomeScreen({ user, post, justFinished, onStartSurvey, onOpenBrief, onPostChanged }: {
   user: User; post: RiskPost; justFinished?: boolean; onStartSurvey: () => void; onOpenBrief: (b: Brief, print?: boolean) => void; onPostChanged: () => void
@@ -38,40 +41,37 @@ export function HomeScreen({ user, post, justFinished, onStartSurvey, onOpenBrie
 
   return (
     <Screen>
-      <header className="topbar">
-        <span className="logo small-logo">acaps</span>
-        <span className="pill">{isAcaps ? 'ACAPS' : user.displayName}</span>
-      </header>
+      <TopBar
+        left={<Text variant="meta">{isAcaps ? 'ACAPS analyst' : user.displayName}</Text>}
+        center={<Logo />}
+        right={<ThemeToggle />}
+      />
 
       {loaded && !isAcaps && todo < post.triggers.length && (
         <YourStand post={post} byTrigger={byTrigger} justFinished={justFinished} />
       )}
 
       {isAcaps && loaded && (
-        <>
-          <h3>Panel this round</h3>
+        <Stack gap={3}>
+          <Title size="md" as="h2">Panel this round</Title>
           {post.triggers.map((t) => (
             <PanelRow key={t.id} user={user} trigger={t} data={byTrigger[t.id] as Unlocked} onRated={() => { onPostChanged(); load() }} />
           ))}
-          <button className="primary" onClick={publish} disabled={publishing}>Close round and publish panel brief</button>
-          <p className="muted small">Publishes pooled numbers only. Triggers with fewer than 3 answers are left out.</p>
-        </>
+          <Button variant="primary" size="lg" block onClick={publish} disabled={publishing}>Close round and publish brief</Button>
+          <Text variant="meta" center>Pooled numbers only. Topics with fewer than 3 answers are left out.</Text>
+        </Stack>
       )}
 
-      <div className="feed">
-      {loaded && !isAcaps && todo > 0 && (
-        <AskCard place={place} todo={todo} onStart={onStartSurvey} />
-      )}
-      {briefs.map((b) => <BriefCard key={b.id} brief={b} onOpen={() => onOpenBrief(b)} onDownload={() => onOpenBrief(b, true)} />)}
-      {!isAcaps && loaded && todo === 0 && !briefs.some((b) => b.kind === 'panel' && b.date >= today()) && (
-        <p className="meta">This round’s brief comes out when ACAPS closes the round.</p>
-      )}
-      </div>
+      <Stack gap={3}>
+        {loaded && !isAcaps && todo > 0 && <AskCard place={place} todo={todo} onStart={onStartSurvey} />}
+        {briefs.map((b) => <BriefCard key={b.id} brief={b} onOpen={() => onOpenBrief(b)} onDownload={() => onOpenBrief(b, true)} />)}
+        {!isAcaps && loaded && todo === 0 && !briefs.some((b) => b.kind === 'panel' && b.date >= today()) && (
+          <Text variant="meta" center>This round’s brief comes out when ACAPS closes the round.</Text>
+        )}
+      </Stack>
     </Screen>
   )
 }
-
-const today = () => new Date().toISOString().slice(0, 10)
 
 /** The personal bit: what you said, and how many peers said the same. */
 function YourStand({ post, byTrigger, justFinished }: { post: RiskPost; byTrigger: Record<string, TriggerResponses>; justFinished?: boolean }) {
@@ -82,44 +82,39 @@ function YourStand({ post, byTrigger, justFinished }: { post: RiskPost; byTrigge
     const mine = d.responses.find((r) => r.isMine)
     if (!mine) return []
     const peers = d.responses.filter((r) => !r.isMine)
-    const same = peers.filter((r) => r.stance === mine.stance).length
-    return [{ t, d, mine, peers, same }]
+    return [{ t, d, mine, peers, same: peers.filter((r) => r.stance === mine.stance).length }]
   })
   if (!rows.length) return null
-  const line = (r: (typeof rows)[number]) => {
-    const short = (TRIGGER_COPY[r.t.id]?.short ?? r.t.title).toLowerCase()
-    const said = r.mine.stance === 'agree' ? `ACAPS has ${short} about right`
-      : r.mine.stance === 'missing' ? `something else is going on with ${short}`
-      : `${short} ${r.mine.stance === 'more_severe' ? 'are further along' : 'aren’t as far along'}`
-    return { said: `You said ${said}.`, peers: `${r.same} of your ${r.peers.length} peers said the same.` }
+  const said = (r: (typeof rows)[number]) => {
+    const s = short(r.t).toLowerCase()
+    return r.mine.stance === 'agree' ? `You said ACAPS has ${s} about right.`
+      : r.mine.stance === 'missing' ? `You said something else is going on with ${s}.`
+      : `You said ${s} ${r.mine.stance === 'more_severe' ? 'are further along' : 'aren’t as far along'}.`
   }
-  const first = line(rows[0])
+  const peersLine = (r: (typeof rows)[number]) => `${r.same} of your ${r.peers.length} peers said the same.`
 
   return (
-    <section className="stand">
-      {justFinished && <p className="meta">Thanks, your answers are in.</p>}
-      <p className="stand-line">{first.said} {first.peers}</p>
-      <button className="link" onClick={() => setOpen((v) => !v)}>{open ? 'Hide' : rows.length > 1 ? `See all ${rows.length} ›` : 'See your peers’ notes ›'}</button>
-      {open && rows.map((r) => {
-        const l = line(r)
-        return (
-          <div key={r.t.id} className="card">
-            <h4>{TRIGGER_COPY[r.t.id]?.short ?? r.t.title}</h4>
-            <p className="small">{l.said} {l.peers}</p>
-            {!r.d.aggregate.split || <p className="muted small">Your panel was divided on this one.</p>}
-            <ul className="reasons">
-              {r.peers.filter((p) => p.reason).map((p) => (
-                <li key={p.id}><span className="who">{p.displayName}</span> · {ANSWER_SHORT[p.stance]}<p>{p.reason}</p></li>
-              ))}
-            </ul>
-          </div>
-        )
-      })}
-    </section>
+    <Stack gap={3}>
+      <Card tone="lilac" center>
+        {justFinished && <Text variant="meta">Thanks, your answers are in</Text>}
+        <Title size="lg">{said(rows[0])}</Title>
+        <Text>{peersLine(rows[0])}</Text>
+        <Link center onClick={() => setOpen((v) => !v)}>{open ? 'Hide' : rows.length > 1 ? `See all ${rows.length}` : 'See your peers’ notes'}</Link>
+      </Card>
+      {open && rows.map((r) => (
+        <Card key={r.t.id}>
+          <Stack gap={2}>
+            <Title size="md" as="h3">{short(r.t)}</Title>
+            <Text>{said(r)} {peersLine(r)}{r.d.aggregate.split && ' Your panel was divided on this one.'}</Text>
+          </Stack>
+          <Notes items={r.peers.filter((p) => p.reason).map((p) => ({ id: p.id, who: p.displayName, tag: ANSWER_SHORT[p.stance], text: p.reason }))} />
+        </Card>
+      ))}
+    </Stack>
   )
 }
 
-/** ACAPS-only: the analyst's numbers. */
+/** ACAPS-only: the analyst's numbers and the rating control. */
 function PanelRow({ user, trigger, data, onRated }: { user: User; trigger: Trigger; data: Unlocked; onRated: () => void }) {
   const [open, setOpen] = useState(false)
   const current = trigger.completionRate ?? 0
@@ -128,43 +123,35 @@ function PanelRow({ user, trigger, data, onRated }: { user: User; trigger: Trigg
   useEffect(() => setRate(trigger.completionRate ?? 0), [trigger.completionRate])
   const save = async () => { await api.updateRating(user.id, trigger.id, rate, informed); onRated() }
   const agg = data.aggregate
+
   return (
-    <section className="card">
-      <h4>{TRIGGER_COPY[trigger.id]?.short ?? trigger.title} {agg.split && <span className="badge">split</span>}</h4>
-      <ProgressMeter rate={trigger.completionRate} />
-      <div className="rate-row">
-        <button className="pill-btn" onClick={() => setRate((r) => Math.max(0, r - 5))} aria-label="Lower rating">−</button>
+    <Card>
+      <Title size="md" as="h3">{short(trigger)}{agg.split && <Badge>split</Badge>}</Title>
+      <Meter label="ACAPS progress" value={trigger.completionRate} />
+      <Row wrap>
+        <Button size="sm" onClick={() => setRate((r) => Math.max(0, r - 5))} aria-label="Lower rating">−</Button>
         <strong className="rate-val">{rate}%</strong>
-        <button className="pill-btn" onClick={() => setRate((r) => Math.min(100, r + 5))} aria-label="Raise rating">+</button>
-        <label className="meta rate-check"><input type="checkbox" checked={informed} onChange={(e) => setInformed(e.target.checked)} /> Informed by panel</label>
-        {rate !== current && <button className="pill-btn" onClick={save}>Update rating</button>}
-      </div>
-      {data.count === 0 ? <p className="muted small">No answers yet</p> : (
+        <Button size="sm" onClick={() => setRate((r) => Math.min(100, r + 5))} aria-label="Raise rating">+</Button>
+        <Row><Toggle on={informed} onChange={setInformed} label="Informed by panel" /><Text variant="meta">Informed by panel</Text></Row>
+      </Row>
+      {rate !== current && <Button variant="primary" onClick={save}>Update rating to {rate}%</Button>}
+
+      {data.count === 0 ? <Text variant="meta">No answers yet</Text> : (
         <>
-          <div className="stack-bar" aria-hidden>
-            {ORDER.map((s) => agg.stances[s] > 0 && <span key={s} className={`seg seg-${s}`} style={{ flex: agg.stances[s] }} />)}
-          </div>
-          <p className="legend">
-            {ORDER.filter((s) => agg.stances[s]).map((s) => <span key={s}><i className={`dot seg-${s}`} />{agg.stances[s]} {ANSWER_SHORT[s]}</span>)}
-          </p>
-          <p className="muted small">
+          <StackBar parts={ORDER.map((s) => ({ label: ANSWER_SHORT[s], value: agg.stances[s], tone: STANCE_TONE[s] }))} />
+          <Text variant="meta">
             {agg.probability
               ? `Chance of reaching 100% in 6 months: median ${agg.probability.median}% (${agg.probability.min}–${agg.probability.max}%, n=${agg.probability.n})`
               : 'No estimates'}
-          </p>
-          <button className="link" onClick={() => setOpen((v) => !v)}>{open ? 'Hide answers' : `All ${data.count} answers`}</button>
+          </Text>
+          <Link onClick={() => setOpen((v) => !v)}>{open ? 'Hide answers' : `All ${data.count} answers`}</Link>
           {open && (
-            <ul className="reasons">
-              {data.responses.map((r) => (
-                <li key={r.id}>
-                  <span className="who">{r.displayName}</span> · {ANSWER_SHORT[r.stance]}{r.probability !== null && ` · ${r.probability}%`}
-                  {r.reason && <p>{r.reason}</p>}
-                </li>
-              ))}
-            </ul>
+            <Notes items={data.responses.map((r) => ({
+              id: r.id, who: r.displayName, tag: `${ANSWER_SHORT[r.stance]}${r.probability !== null ? ` · ${r.probability}%` : ''}`, text: r.reason || undefined,
+            }))} />
           )}
         </>
       )}
-    </section>
+    </Card>
   )
 }
