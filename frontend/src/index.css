@@ -82,3 +82,30 @@ p { margin: 0 0 8px; line-height: 1.45; }
 
 .devbar { position: fixed; bottom: 12px; display: flex; gap: 8px; background: #333; padding: 8px; border-radius: 10px; font-size: 12px; }
 .devbar select, .devbar button { background: #555; color: #fff; border: 0; border-radius: 6px; padding: 4px 8px; font-size: 12px; }
+
+/* --- v2: calmer survey + home --- */
+.primary { background: #fff; color: #555; border-radius: 10px; padding: 13px; font-size: 16px; font-weight: 500; width: 100%; }
+.survey { gap: 20px; }
+.dots { display: flex; gap: 6px; }
+.dots span { width: 22px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.3); }
+.dots span.on { background: #fff; }
+.q { margin-top: 12vh; display: flex; flex-direction: column; gap: 10px; }
+.q-context { font-size: 17px; line-height: 1.45; margin: 0; }
+.q-ask { font-size: 24px; text-align: left; line-height: 1.25; }
+.center-link { align-self: center; margin-top: 4px; }
+.center-link.on { color: #fff; font-weight: 500; }
+.followup { display: flex; flex-direction: column; gap: 10px; }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip { background: var(--surface); border-radius: 999px; padding: 8px 14px; font-size: 14px; outline: 2px solid transparent; }
+.chip.selected { outline-color: #fff; background: var(--surface-2); }
+.thanks { font-size: 15px; margin: 4px 0 0; }
+.invite { gap: 8px; }
+.invite p { margin: 0; }
+.headline { font-size: 15px; margin: 4px 0 0; }
+.stack-bar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; gap: 2px; }
+.seg-more_severe { background: #fff; }
+.seg-agree { background: #cfcfcf; }
+.seg-less_severe { background: #b0b0b0; }
+.seg-missing { background: #6f6f6f; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--ink-dim); margin: 0; }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
