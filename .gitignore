@@ -19,6 +19,7 @@ env/
 *.ipynb_metadata/
 
 # IDE and AI tools
+CLAUDE.md
 .idea/
 .vscode/
 .claude/
