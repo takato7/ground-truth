@@ -1,0 +1,58 @@
+{
+  "id": "R1043",
+  "title": "Escalating cross-border insecurity linked to the Sudan conflict increases protection risks and humanitarian needs in eastern Chad",
+  "country": "Chad",
+  "riskType": "Marked deterioration in an existing crisis",
+  "probability": "High",
+  "impact": 4,
+  "riskLevel": "High",
+  "trend": "Deteriorated",
+  "status": "Active",
+  "exposure": ">500,000",
+  "latestUpdate": "30/09/2026\nThe risk remains active, although no significant new cross-border attacks inside Chad were identified during the second half of September. Humanitarian pressure linked to the Sudan conflict has nevertheless increased sharply as fighting in Darfur and other parts of Sudan drives renewed displacement across the border. By 25 September, more than 400 Sudanese refugees were crossing into Chad each day, around 20 times the rate recorded in previous months, bringing arrivals since the beginning of 2026 to more than 55,000. The acceleration in arrivals is increasing pressure on already overstretched reception areas and services in eastern Chad, while funding constraints affect humanitarian organisations' capacity to provide shelter, food, and relocation assistance. Continued conflict in neighbouring Sudan therefore maintains the risk of further refugee arrivals and humanitarian deterioration in eastern Chad, while the potential for renewed cross-border security incidents remains, given the heightened military presence and tensions established along the border following the August strikes.",
+  "triggers": [
+    {
+      "id": "T0618",
+      "title": "Expansion of cross-border attacks and insecurity",
+      "description": "Additional drone strikes, shelling, or armed incursions near the Chad–Sudan border, particularly around Adré, Tina, and other eastern border localities, increase civilian casualties, trigger further displacement into Chad, and constrain humanitarian operations in already fragile border areas. Continued insecurity may also disrupt cross-border trade and movement routes relied upon by refugees and host communities",
+      "completionRate": 40,
+      "completionHistory": [
+        {
+          "date": "02-06-2026",
+          "rate": 40
+        }
+      ],
+      "quantitativeObjective": "100% completion would be reached if cross-border attacks become sustained and recurrent, affecting multiple border localities in eastern Chad and causing significant civilian casualties, displacement, or humanitarian access disruptions."
+    },
+    {
+      "id": "T0619",
+      "title": "Attacks on strategic infrastructure in Chad",
+      "description": "Threats by Sudanese actors against Chadian airports, border facilities, military positions, or transport infrastructure may materialise into direct attacks on strategic assets in eastern Chad. Any strike against airports such as Amdjarass, military installations, or critical transport corridors would increase the risk of direct confrontation between Chad and Sudanese armed actors, disrupt humanitarian and commercial operations, and further destabilise border regions",
+      "completionRate": 10,
+      "completionHistory": [
+        {
+          "date": "02-06-2026",
+          "rate": 20
+        },
+        {
+          "date": "02-06-2026",
+          "rate": 10
+        }
+      ],
+      "quantitativeObjective": "100% completion would be reached if attacks directly target strategic infrastructure in Chad, including airports, military facilities, border posts, or major transport corridors, causing significant disruption to civilian, humanitarian, or commercial activities."
+    },
+    {
+      "id": "T0620",
+      "title": "Renewed proxy mobilisation and cross-border armed group activity",
+      "description": "Historical patterns of proxy warfare between Chad and Sudan may re-emerge through the mobilisation, arming, or support of rebel groups and allied militias operating along the border. Increased involvement of SAF-aligned groups, RSF-linked actors, Darfuri armed factions, or Chadian rebel networks could expand the conflict beyond isolated border incidents and increase the likelihood of retaliatory attacks on Chadian territory.",
+      "completionRate": 20,
+      "completionHistory": [
+        {
+          "date": "02-06-2026",
+          "rate": 20
+        }
+      ],
+      "quantitativeObjective": "100% completion would be reached if armed groups, militias, or proxy actors operating across the Chad–Sudan border become actively involved in cross-border hostilities, resulting in sustained violence, retaliatory attacks, or territorial insecurity in eastern Chad."
+    }
+  ]
+}
