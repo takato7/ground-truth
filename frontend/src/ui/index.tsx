@@ -7,7 +7,10 @@ import './components.css'
 
 const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(' ')
 
-export type Tone = 'plain' | 'rose' | 'butter' | 'mint' | 'sky' | 'lilac'
+/** Card tones: plain white, soft accent wash, or solid ACAPS blue for the one thing that needs you. */
+export type Tone = 'plain' | 'soft' | 'accent'
+/** Fills for dots and bars: ACAPS blue plus three greys. */
+export type Fill = 'accent' | 'ink' | 'mid' | 'faint'
 
 // ---- layout ----------------------------------------------------------------
 
@@ -40,7 +43,7 @@ export function Logo({ size = 'md' }: { size?: 'md' | 'lg' }) {
 
 // ---- type ------------------------------------------------------------------
 
-/** Serif display heading, as on the highlighted cards. */
+/** Display heading. */
 export function Title({ children, size = 'lg', center, as: Tag = 'h1' }: { children: ReactNode; size?: 'md' | 'lg' | 'xl'; center?: boolean; as?: 'h1' | 'h2' | 'h3' }) {
   return <Tag className={cx('ui-title', `ui-title--${size}`, center && 'ui-center')}>{children}</Tag>
 }
@@ -50,8 +53,43 @@ export function Text({ children, variant = 'body', center, className }: { childr
 }
 
 /** Small coloured marker, e.g. before a card's meta line. */
-export function Dot({ tone, ring }: { tone: Tone; ring?: boolean }) {
-  return <i className={cx('ui-dot', `ui-dot--${tone}`, ring && 'ui-dot--ring')} aria-hidden />
+export function Dot({ fill = 'accent' }: { fill?: Fill | 'current' }) {
+  return <i className={cx('ui-dot', `ui-fill--${fill}`)} aria-hidden />
+}
+
+/** Round icon-only button. */
+export function IconButton({ label, children, onClick }: { label: string; children: ReactNode; onClick?: () => void }) {
+  return <button className="ui-iconbtn" aria-label={label} onClick={onClick}>{children}</button>
+}
+
+export function MenuIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden>
+      <path d="M3 6h16M3 11h16M3 16h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+/** Placeholder avatar: an empty circle for now. */
+export function Avatar({ size = 'md', onClick }: { size?: 'md' | 'lg'; onClick?: () => void }) {
+  const el = <span className={cx('ui-avatar', size === 'lg' && 'ui-avatar--lg')} aria-hidden />
+  return onClick ? <button className="ui-avatar-btn" aria-label="Profile" onClick={onClick}>{el}</button> : el
+}
+
+/** Panel that slides in from the left, over the current screen. */
+export function Drawer({ open, onClose, children }: { open: boolean; onClose: () => void; children: ReactNode }) {
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open, onClose])
+  return (
+    <div className={cx('ui-drawer', open && 'is-open')} aria-hidden={!open}>
+      <div className="ui-drawer__scrim" onClick={onClose} />
+      <aside className="ui-drawer__panel" role="dialog" aria-label="Menu">{children}</aside>
+    </div>
+  )
 }
 
 // ---- actions ---------------------------------------------------------------
@@ -94,7 +132,7 @@ export function Link({ children, onClick, center }: { children: ReactNode; onCli
 
 // ---- containers --------------------------------------------------------------
 
-/** Rounded card. `tone` gives the highlighter tint; `plain` is white/raised. */
+/** Rounded card. plain = white/raised, soft = light blue wash, accent = solid ACAPS blue. */
 export function Card({ children, tone = 'plain', className, center }: { children: ReactNode; tone?: Tone; className?: string; center?: boolean }) {
   return <article className={cx('ui-card', `ui-card--${tone}`, center && 'ui-card--center', className)}>{children}</article>
 }
@@ -104,14 +142,14 @@ export function CardTap({ children, onClick }: { children: ReactNode; onClick: (
   return <button className="ui-card__tap" onClick={onClick}>{children}</button>
 }
 
-/** Feed card: meta line with a dot, serif headline, optional summary, pill actions. */
+/** Feed card: meta line with a dot, headline, optional summary, pill actions. */
 export function FeedCard({ tone, meta, title, summary, onOpen, actions, center }: {
   tone: Tone; meta: ReactNode; title: ReactNode; summary?: ReactNode; onOpen: () => void; actions: ReactNode; center?: boolean
 }) {
   return (
     <Card tone={tone} center={center} className="ui-feedcard">
       <CardTap onClick={onOpen}>
-        <span className="ui-text ui-text--meta"><Dot tone={tone === 'plain' ? 'lilac' : tone} />{meta}</span>
+        <span className="ui-text ui-text--meta"><Dot fill={tone === 'accent' ? 'current' : tone === 'plain' ? 'mid' : 'accent'} />{meta}</span>
         <span className="ui-title ui-title--md">{title}</span>
         {summary && <span className="ui-text ui-text--body ui-clamp">{summary}</span>}
       </CardTap>
@@ -183,15 +221,15 @@ export function Meter({ label, value }: { label: string; value: number | null })
 }
 
 /** Stacked proportion bar with a legend. */
-export function StackBar({ parts }: { parts: { label: string; value: number; tone: Tone }[] }) {
+export function StackBar({ parts }: { parts: { label: string; value: number; fill: Fill }[] }) {
   const shown = parts.filter((p) => p.value > 0)
   return (
     <div className="ui-stackbar">
       <div className="ui-stackbar__bar" aria-hidden>
-        {shown.map((p) => <span key={p.label} className={`ui-fill--${p.tone}`} style={{ flex: p.value }} />)}
+        {shown.map((p) => <span key={p.label} className={`ui-fill--${p.fill}`} style={{ flex: p.value }} />)}
       </div>
       <div className="ui-stackbar__legend">
-        {shown.map((p) => <span key={p.label}><Dot tone={p.tone} />{p.value} {p.label}</span>)}
+        {shown.map((p) => <span key={p.label}><Dot fill={p.fill} />{p.value} {p.label}</span>)}
       </div>
     </div>
   )

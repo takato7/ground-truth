@@ -5,8 +5,8 @@ import { Button, Dot, FeedCard, Row, Screen, Stack, Text, Title, TopBar, type To
 const fmt = (iso: string) => new Date(iso + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 const fmtLong = (iso: string) => new Date(iso + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
 
-/** Each kind of thing in the feed has one tint. */
-export const KIND_TONE: Record<Brief['kind'] | 'ask', Tone> = { ask: 'rose', panel: 'mint', rating: 'butter', update: 'plain' }
+/** Card tone per feed item: solid blue for the survey, soft blue for panel output, white for ACAPS updates. */
+export const KIND_TONE: Record<Brief['kind'] | 'ask', Tone> = { ask: 'accent', panel: 'soft', rating: 'soft', update: 'plain' }
 
 const meta = (b: Brief) =>
   b.kind === 'panel' ? `Panel brief · ${b.panelSize} experts · ${fmt(b.date)}`
@@ -70,7 +70,7 @@ export function BriefScreen({ brief, onBack, autoPrint }: { brief: Brief; onBack
       <div className="no-print"><TopBar left={<Button variant="ghost" onClick={onBack}>‹ Back</Button>} /></div>
       <article className="doc">
         <Stack gap={4}>
-          <Text variant="meta"><Dot tone={KIND_TONE[brief.kind] === 'plain' ? 'lilac' : KIND_TONE[brief.kind]} />{meta(brief)}</Text>
+          <Text variant="meta"><Dot fill={brief.kind === 'update' ? 'mid' : 'accent'} />{meta(brief)}</Text>
           <Title size="xl">{brief.headline}</Title>
           {brief.body.map((p, i) => <Text key={i} variant="lead">{p}</Text>)}
           {brief.kind === 'panel' && (
