@@ -19,6 +19,7 @@ env/
 *.ipynb_metadata/
 
 # IDE and AI tools
+CLAUDE.md
 .idea/
 .vscode/
 .claude/
@@ -34,11 +35,19 @@ desktop.ini
 # Node (if teams use JS/TS)
 node_modules/
 package-lock.json
+!frontend/package-lock.json
 yarn.lock
+*.tsbuildinfo
 
 # Data artifacts (keep original data, ignore generated)
 *.tmp
 *.bak
+
+# Local databases
+*.db
+*.db-wal
+*.db-shm
+*.sqlite3
 
 # Secrets
 .env

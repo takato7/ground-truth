@@ -1,23 +1,39 @@
-import { useEffect } from 'react'
-import type { Brief } from '../api/types'
-import { Screen } from '../components'
+import { useEffect } from "react"
+import type { Brief } from "../api/types"
+import { Screen } from "../components"
 
-const fmt = (iso: string) => new Date(iso + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
-const fmtLong = (iso: string) => new Date(iso + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+const fmt = (iso: string) =>
+  new Date(iso + "T12:00:00").toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+  })
+const fmtLong = (iso: string) =>
+  new Date(iso + "T12:00:00").toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  })
 
 /** One meta line for every kind of brief. */
 const meta = (b: Brief) =>
-  b.kind === 'panel' ? `Panel brief · ${b.panelSize} experts · ${fmt(b.date)}`
-  : b.kind === 'rating' ? `Rating change · ${fmt(b.date)}`
-  : `ACAPS update · ${fmt(b.date)}`
+  b.kind === "panel"
+    ? `Panel brief · ${b.panelSize} experts · ${fmt(b.date)}`
+    : b.kind === "rating"
+      ? `Rating change · ${fmt(b.date)}`
+      : `ACAPS update · ${fmt(b.date)}`
 
 /** Small type marker before the meta line. */
-const Kind = ({ kind }: { kind: string }) => <i className={`kind-dot kind-${kind}`} aria-hidden />
-const source = (b: Brief) => (b.kind === 'panel' ? `ACAPS expert panel, ${b.panelSize} experts, ${fmtLong(b.date)}` : `ACAPS, ${fmtLong(b.date)}`)
+const Kind = ({ kind }: { kind: string }) => (
+  <i className={`kind-dot kind-${kind}`} aria-hidden />
+)
+const source = (b: Brief) =>
+  b.kind === "panel"
+    ? `ACAPS expert panel, ${b.panelSize} experts, ${fmtLong(b.date)}`
+    : `ACAPS, ${fmtLong(b.date)}`
 
 /** Plain text for sharing. Pooled numbers only; nothing that identifies an expert. */
 function shareText(b: Brief) {
-  return `${b.headline}\n\n${b.body.join('\n\n')}\n\n${source(b)}`
+  return `${b.headline}\n\n${b.body.join("\n\n")}\n\n${source(b)}`
 }
 
 async function share(b: Brief) {
@@ -25,65 +41,132 @@ async function share(b: Brief) {
   // Either way the app itself sends nothing.
   const text = shareText(b)
   if (navigator.share) {
-    try { await navigator.share({ title: b.headline, text }); return } catch { /* cancelled */ }
+    try {
+      await navigator.share({ title: b.headline, text })
+      return
+    } catch {
+      /* cancelled */
+    }
   }
   window.location.href = `mailto:?subject=${encodeURIComponent(b.headline)}&body=${encodeURIComponent(text)}`
 }
 
 /** Every brief looks the same in the feed: meta, headline, a short summary, and the same three actions. */
-export function BriefCard({ brief, onOpen, onDownload }: { brief: Brief; onOpen: () => void; onDownload: () => void }) {
+export function BriefCard({
+  brief,
+  onOpen,
+  onDownload,
+}: {
+  brief: Brief
+  onOpen: () => void
+  onDownload: () => void
+}) {
   return (
     <article className="card brief">
       <button className="brief-tap" onClick={onOpen}>
-        <span className="meta"><Kind kind={brief.kind} />{meta(brief)}</span>
+        <span className="meta">
+          <Kind kind={brief.kind} />
+          {meta(brief)}
+        </span>
         <span className="brief-head">{brief.headline}</span>
         <span className="brief-sum">{brief.body[0]}</span>
       </button>
       <div className="pills">
-        <button className="pill-btn" onClick={onOpen}>Read</button>
-        <button className="pill-btn" onClick={onDownload}>Download PDF</button>
-        <button className="pill-btn" onClick={() => share(brief)}>Share</button>
+        <button className="pill-btn" onClick={onOpen}>
+          Read
+        </button>
+        <button className="pill-btn" onClick={onDownload}>
+          Download PDF
+        </button>
+        <button className="pill-btn" onClick={() => void share(brief)}>
+          Share
+        </button>
       </div>
     </article>
   )
 }
 
 /** The survey invite, in the same card shape as everything else in the feed. */
-export function AskCard({ place, todo, onStart }: { place: string; todo: number; onStart: () => void }) {
+export function AskCard({
+  place,
+  todo,
+  onStart,
+}: {
+  place: string
+  todo: number
+  onStart: () => void
+}) {
   return (
     <article className="card brief">
       <button className="brief-tap" onClick={onStart}>
-        <span className="meta"><Kind kind="ask" />Your read · {todo} {todo === 1 ? 'question' : 'questions'} · about {todo} min</span>
-        <span className="brief-head">ACAPS would like your read on {place}</span>
-        <span className="brief-sum">Answer independently first, then see where your panel landed.</span>
+        <span className="meta">
+          <Kind kind="ask" />
+          Your read · {todo} {todo === 1 ? "question" : "questions"} · about{" "}
+          {todo} min
+        </span>
+        <span className="brief-head">
+          ACAPS would like your read on {place}
+        </span>
+        <span className="brief-sum">
+          Answer independently first, then see where your panel landed.
+        </span>
       </button>
       <div className="pills">
-        <button className="pill-btn pill-strong" onClick={onStart}>Start</button>
+        <button className="pill-btn pill-strong" onClick={onStart}>
+          Start
+        </button>
       </div>
     </article>
   )
 }
 
 /** Full brief. Two text sizes only; prints cleanly via Save as PDF. */
-export function BriefScreen({ brief, onBack, autoPrint }: { brief: Brief; onBack: () => void; autoPrint?: boolean }) {
+export function BriefScreen({
+  brief,
+  onBack,
+  autoPrint,
+}: {
+  brief: Brief
+  onBack: () => void
+  autoPrint?: boolean
+}) {
   // "Download PDF" from a card opens the brief and goes straight to the print dialog.
-  useEffect(() => { if (autoPrint) { const t = setTimeout(() => window.print(), 300); return () => clearTimeout(t) } }, [autoPrint])
+  useEffect(() => {
+    if (autoPrint) {
+      const t = setTimeout(() => window.print(), 300)
+      return () => clearTimeout(t)
+    }
+  }, [autoPrint])
   return (
     <Screen className="brief-screen">
       <header className="topbar no-print">
-        <button className="back" onClick={onBack}>‹ Back</button>
+        <button className="back" onClick={onBack}>
+          ‹ Back
+        </button>
       </header>
       <article className="doc">
-        <p className="meta"><Kind kind={brief.kind} />{meta(brief)}</p>
+        <p className="meta">
+          <Kind kind={brief.kind} />
+          {meta(brief)}
+        </p>
         <h1 className="doc-head">{brief.headline}</h1>
-        {brief.body.map((p, i) => <p key={i}>{p}</p>)}
-        {brief.kind === 'panel' && (
-          <p className="meta">Pooled, anonymous answers from ACAPS’s expert panel. Individual responses are never published.{brief.demo && ' Demo data.'}</p>
+        {brief.body.map((p, i) => (
+          <p key={i}>{p}</p>
+        ))}
+        {brief.kind === "panel" && (
+          <p className="meta">
+            Pooled, anonymous answers from ACAPS’s expert panel. Individual
+            responses are never published.{brief.demo && " Demo data."}
+          </p>
         )}
       </article>
       <div className="doc-actions no-print">
-        <button className="pill-btn" onClick={() => window.print()}>Save as PDF</button>
-        <button className="pill-btn" onClick={() => share(brief)}>Share</button>
+        <button className="pill-btn" onClick={() => window.print()}>
+          Save as PDF
+        </button>
+        <button className="pill-btn" onClick={() => void share(brief)}>
+          Share
+        </button>
       </div>
     </Screen>
   )

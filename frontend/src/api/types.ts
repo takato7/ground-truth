@@ -1,11 +1,11 @@
 // Shapes the frontend expects from the API.
 // Mirrors Takato's brief; swap for the generated OpenAPI types when the backend lands.
 
-export type Stance = 'agree' | 'more_severe' | 'less_severe' | 'missing'
+export type Stance = "agree" | "more_severe" | "less_severe" | "missing"
 
-export type AnonymityLevel = 'known_to_acaps' | 'pseudonymous' | 'per_post'
+export type AnonymityLevel = "known_to_acaps" | "pseudonymous" | "per_post"
 
-export type Role = 'acaps' | 'expert'
+export type Role = "acaps" | "expert"
 
 export interface User {
   id: string
@@ -72,19 +72,24 @@ export interface TriggerAggregate {
 /** Answer first, then see others: before responding you only get `count`. */
 export type TriggerResponses =
   | { locked: true; count: number }
-  | { locked: false; count: number; responses: ResponseOut[]; aggregate: TriggerAggregate }
+  | {
+      locked: false
+      count: number
+      responses: ResponseOut[]
+      aggregate: TriggerAggregate
+    }
 
 export const STANCE_LABEL: Record<Stance, string> = {
-  agree: 'Agree',
-  more_severe: 'More severe',
-  less_severe: 'Less severe',
-  missing: 'Something is missing',
+  agree: "Agree",
+  more_severe: "More severe",
+  less_severe: "Less severe",
+  missing: "Something is missing",
 }
 
 /** Something in the briefs feed. Panel briefs only ever hold pooled numbers: no quotes, no aliases. */
 export interface Brief {
   id: string
-  kind: 'panel' | 'update' | 'rating'
+  kind: "panel" | "update" | "rating"
   date: string // ISO
   headline: string
   body: string[]
