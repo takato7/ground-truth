@@ -102,10 +102,7 @@ export function FeedPage({
             <Text as="h1" role="title">
               We have a few questions about eastern Chad
             </Text>
-            <Text color="secondary">
-              Answer the ones you know about and skip the rest. Your answers go
-              straight to ACAPS’s analysts.
-            </Text>
+            <Text color="secondary">Answer the ones you know.</Text>
             <Text role="meta">
               {`${left} ${left === 1 ? "question" : "questions"} this week · about ${left < 3 ? "a minute" : "two minutes"}`}
             </Text>
