@@ -1,167 +1,146 @@
+import { House, Newspaper, UserRound } from "lucide-react"
+import { AnimatePresence, LayoutGroup, MotionConfig } from "motion/react"
 import { useEffect, useState } from "react"
-import { api, USERS } from "./api/mockApi"
-import type { Brief, RiskPost, User } from "./api/types"
-import { AnonymityScreen, InviteScreen } from "./screens/Onboarding"
-import { TriggerScreen } from "./screens/TriggerScreen"
-import { HomeScreen } from "./screens/HomeScreen"
-import { BriefScreen } from "./screens/Briefs"
-import { fetchHealth } from "./api/health"
-import { HealthStatus, type HealthViewState } from "./screens/HealthStatus"
+import { CardSheet } from "./components/CardSheet"
+import { Pager, TabBar, usePager, type PageDef } from "./components/Pager"
+import { SCENARIOS, type ScenarioId } from "./data/scenarios"
+import { StoreProvider, useStore } from "./data/store"
+import type { Card } from "./data/types"
+import { FeedPage } from "./pages/FeedPage"
+import { NewsPage } from "./pages/NewsPage"
+import { Onboarding } from "./pages/Onboarding"
+import { YouPage } from "./pages/YouPage"
 
-// invite → anonymity → survey (skippable, opens straight away if questions are waiting) → home.
-// Home is always reachable; only peers' answers stay hidden until you've answered.
-type Step =
-  | { name: "invite" }
-  | { name: "anonymity" }
-  | { name: "survey"; index: number }
-  | { name: "home"; justFinished?: boolean }
-  | { name: "brief"; brief: Brief; print?: boolean }
+interface Sheet {
+  card: Card
+  from: "feed" | "you"
+  height: number
+}
 
-/** Indexes of triggers this expert hasn't answered yet. */
-async function pending(user: User, post: RiskPost): Promise<number[]> {
-  if (user.role !== "expert") return []
-  const rs = await Promise.all(
-    post.triggers.map((t) => api.getResponses(user.id, t.id)),
+function Main() {
+  const { state, dispatch, open } = useStore()
+  const { ref, progress, index, goTo } = usePager(3)
+  const [sheet, setSheet] = useState<Sheet | null>(null)
+
+  // Opening the You page clears its "new answers" badge.
+  useEffect(() => {
+    if (index === 2) dispatch({ type: "seen" })
+  }, [index, dispatch])
+
+  const onOpen = (card: Card, from: Sheet["from"], el: HTMLElement) =>
+    setSheet({ card, from, height: el.getBoundingClientRect().height })
+
+  const active = (from: Sheet["from"]) =>
+    sheet?.from === from ? sheet.card.id : undefined
+  const answer = sheet && state.answers[sheet.card.id]
+  // Answered from the feed, the card has left the list, so the sheet flies off instead of shrinking back.
+  const returning =
+    !sheet || sheet.from === "you" || open.some((c) => c.id === sheet.card.id)
+
+  const pages: PageDef[] = [
+    {
+      id: "feed",
+      label: "Feed",
+      icon: House,
+      badge: open.length,
+      content: (
+        <FeedPage
+          activeId={active("feed")}
+          activeHeight={sheet?.height}
+          onOpen={onOpen}
+          onGoNews={() => goTo(1)}
+        />
+      ),
+    },
+    {
+      id: "news",
+      label: "News",
+      icon: Newspaper,
+      content: <NewsPage onGoFeed={() => goTo(0)} />,
+    },
+    {
+      id: "you",
+      label: "You",
+      icon: UserRound,
+      badge: state.unseen,
+      content: (
+        <YouPage
+          activeId={active("you")}
+          activeHeight={sheet?.height}
+          onOpen={onOpen}
+        />
+      ),
+    },
+  ]
+
+  return (
+    <LayoutGroup>
+      <Pager pagerRef={ref} pages={pages} />
+      <TabBar pages={pages} progress={progress} index={index} onSelect={goTo} />
+      <AnimatePresence>
+        {sheet && (
+          <CardSheet
+            key={`${sheet.from}-${sheet.card.id}`}
+            card={sheet.card}
+            layoutId={`${sheet.from}-${sheet.card.id}`}
+            // From the feed the sheet asks first, even mid-flow after this card was just answered.
+            answer={sheet.from === "you" ? (answer ?? undefined) : undefined}
+            identity={state.identity}
+            returning={returning}
+            onAnswer={(a) => dispatch({ type: "answer", answer: a })}
+            onClose={() => setSheet(null)}
+          />
+        )}
+      </AnimatePresence>
+    </LayoutGroup>
   )
-  return rs.flatMap((r, i) => (r.locked ? [i] : []))
+}
+
+/** Dev-only: jump to any demo situation. Replaces login and the old reset button. */
+function DevBar({ onJump }: { onJump: () => void }) {
+  const { scenario, dispatch } = useStore()
+  const jump = (id: ScenarioId) => {
+    dispatch({ type: "scenario", id })
+    onJump()
+  }
+  return (
+    <div className="devbar">
+      <select
+        value={scenario}
+        onChange={(e) => jump(e.target.value as ScenarioId)}
+        aria-label="Demo scenario"
+      >
+        {Object.entries(SCENARIOS).map(([id, s]) => (
+          <option key={id} value={id}>
+            {s.label}
+          </option>
+        ))}
+      </select>
+      <button onClick={() => jump(scenario)}>Restart</button>
+    </div>
+  )
+}
+
+function Shell() {
+  const { state } = useStore()
+  // Remount on every jump so pages, scroll and any open sheet start clean.
+  const [epoch, setEpoch] = useState(0)
+  return (
+    <div className="shell">
+      <div className="phone" key={epoch}>
+        {state.onboarding === "done" ? <Main /> : <Onboarding />}
+      </div>
+      <DevBar onJump={() => setEpoch((n) => n + 1)} />
+    </div>
+  )
 }
 
 export function App() {
-  const [user, setUser] = useState<User | null>(null)
-  const [post, setPost] = useState<RiskPost | null>(null)
-  const [step, setStep] = useState<Step>({ name: "invite" })
-  const [refresh, setRefresh] = useState(0)
-  const [health, setHealth] = useState<HealthViewState>({ kind: "loading" })
-
-  // Backend health (Takato's /api/health), shown beside the dev bar. The screens still run on the mock API.
-  useEffect(() => {
-    let isCurrent = true
-    void fetchHealth().then((result) => {
-      if (isCurrent) setHealth(result)
-    })
-    return () => {
-      isCurrent = false
-    }
-  }, [])
-
-  useEffect(() => {
-    if (user) void api.getPost(user.id).then(setPost)
-  }, [user])
-
-  const enter = async (u: User) => {
-    setUser(u)
-    const p = post ?? (await api.getPost(u.id))
-    setPost(p)
-    const todo = await pending(u, p)
-    setStep(todo.length ? { name: "survey", index: todo[0] } : { name: "home" })
-  }
-
-  const next = async () => {
-    if (!user || !post) return
-    const todo = await pending(user, post)
-    setStep(
-      todo.length
-        ? { name: "survey", index: todo[0] }
-        : { name: "home", justFinished: true },
-    )
-  }
-
-  const switchTo = (id: string) => {
-    if (!id) {
-      setUser(null)
-      setStep({ name: "invite" })
-      return
-    }
-    void enter(api.me(id))
-  }
-
-  let screen
-  if (!user || step.name === "invite") {
-    screen = (
-      <InviteScreen
-        onDone={(u) => {
-          if (u.role === "acaps") {
-            void enter(u)
-          } else {
-            setUser(u)
-            setStep({ name: "anonymity" })
-          }
-        }}
-      />
-    )
-  } else if (step.name === "anonymity") {
-    screen = <AnonymityScreen user={user} onDone={(u) => void enter(u)} />
-  } else if (!post) {
-    screen = (
-      <main className="screen center">
-        <p className="muted">Loading…</p>
-      </main>
-    )
-  } else if (step.name === "survey") {
-    screen = (
-      <TriggerScreen
-        key={step.index}
-        user={user}
-        post={post}
-        index={step.index}
-        onNext={() => void next()}
-        onSkip={() => setStep({ name: "home" })}
-      />
-    )
-  } else if (step.name === "brief") {
-    screen = (
-      <BriefScreen
-        brief={step.brief}
-        autoPrint={step.print}
-        onBack={() => setStep({ name: "home" })}
-      />
-    )
-  } else {
-    screen = (
-      <HomeScreen
-        key={refresh}
-        user={user}
-        post={post}
-        justFinished={step.justFinished}
-        onStartSurvey={() => void next()}
-        onPostChanged={() => void api.getPost(user.id).then(setPost)}
-        onOpenBrief={(brief, print) => {
-          window.scrollTo(0, 0)
-          setStep({ name: "brief", brief, print })
-        }}
-      />
-    )
-  }
-
   return (
-    <div className="shell">
-      <div className="phone">{screen}</div>
-      {/* Dev-only user switcher: replaces login for the demo. */}
-      <div className="dev-health">
-        <HealthStatus state={health} />
-      </div>
-      <div className="devbar">
-        <select
-          value={user?.id ?? ""}
-          onChange={(e) => switchTo(e.target.value)}
-        >
-          <option value="">— sign out —</option>
-          {USERS.map((u) => (
-            <option key={u.id} value={u.id}>
-              {u.role === "acaps" ? "ACAPS analyst" : `${u.realName} (${u.id})`}
-            </option>
-          ))}
-        </select>
-        <button
-          onClick={() => {
-            api.reset()
-            setRefresh((n) => n + 1)
-            if (user) void enter(user)
-          }}
-        >
-          reset data
-        </button>
-      </div>
-    </div>
+    <MotionConfig reducedMotion="user">
+      <StoreProvider>
+        <Shell />
+      </StoreProvider>
+    </MotionConfig>
   )
 }

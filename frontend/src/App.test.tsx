@@ -1,80 +1,130 @@
-import { render, screen } from "@testing-library/react"
-import { afterEach, expect, test, vi } from "vitest"
-import type { components } from "./api/schema.gen"
+import { render, screen, within } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
+import { beforeEach, expect, test } from "vitest"
 import { App } from "./App"
 
-const HTTP_OK = 200
-const HTTP_BAD_GATEWAY = 502
-const HTTP_SERVICE_UNAVAILABLE = 503
-const SCHEMA_OBJECTS = 7
+const FEED_SIZE = 5
 
-const HEALTH_OK: components["schemas"]["HealthOk"] = {
-  status: "ok",
-  api: "up",
-  schema_objects: SCHEMA_OBJECTS,
-}
-const HEALTH_FAILED: components["schemas"]["HealthFailed"] = {
-  status: "database_check_failed",
-  api: "up",
-  detail: "Database check failed: the database could not be opened or queried.",
+beforeEach(() => {
+  localStorage.clear()
+})
+
+async function jumpTo(label: RegExp) {
+  const user = userEvent.setup()
+  render(<App />)
+  const select = screen.getByRole("combobox", { name: "Demo scenario" })
+  const option = within(select).getByRole<HTMLOptionElement>("option", {
+    name: label,
+  })
+  await user.selectOptions(select, option)
+  return user
 }
 
-function stubFetch(result: Response | Error) {
-  const fetchStub = vi.fn<typeof fetch>(() =>
-    result instanceof Error ? Promise.reject(result) : Promise.resolve(result),
+const feedPage = () => screen.getByLabelText("Feed", { selector: ".page" })
+const newsPage = () => screen.getByLabelText("News", { selector: ".page" })
+
+test("an invited expert redeems a code, picks how to appear, and lands on the feed", async () => {
+  const user = userEvent.setup()
+  render(<App />)
+
+  await user.type(screen.getByLabelText("Invite code"), "nope")
+  await user.click(screen.getByRole("button", { name: /continue/i }))
+  expect(screen.getByText(/isn’t valid/)).toBeInTheDocument()
+
+  await user.clear(screen.getByLabelText("Invite code"))
+  await user.type(screen.getByLabelText("Invite code"), "CHAD-E1")
+  await user.click(screen.getByRole("button", { name: /continue/i }))
+  await user.click(screen.getByRole("button", { name: /anonymous/i }))
+  await user.click(screen.getByRole("button", { name: /^start/i }))
+
+  expect(
+    within(feedPage()).getByText(
+      `${FEED_SIZE} questions this week · about two minutes`,
+    ),
+  ).toBeInTheDocument()
+  expect(within(feedPage()).getByText("Anonymous")).toBeInTheDocument()
+})
+
+test("answering a trigger card shows the panel, then the card leaves the feed for the You page", async () => {
+  const user = await jumpTo(/first week/i)
+  await user.click(
+    within(feedPage()).getByText(/attacks along the Chad–Sudan border/),
   )
-  vi.stubGlobal("fetch", fetchStub)
-  return fetchStub
-}
 
-function jsonResponse(body: unknown, status: number): Response {
-  return new Response(JSON.stringify(body), { status })
-}
+  const sheet = screen.getByRole("dialog")
+  await user.click(
+    within(sheet).getByRole("button", { name: "It’s further along" }),
+  )
+  await user.click(
+    await within(sheet).findByRole("button", { name: "Skip and send" }),
+  )
 
-afterEach(() => {
-  vi.unstubAllGlobals()
+  expect(
+    await within(sheet).findByText("Here’s where the panel stands"),
+  ).toBeInTheDocument()
+  expect(
+    within(sheet).getByText(`${FEED_SIZE + 1} experts answered`),
+  ).toBeInTheDocument()
+  // Named peers are quoted; anonymous ones are only counted.
+  expect(within(sheet).getByText("Tomas Hevel")).toBeInTheDocument()
+  expect(
+    within(sheet).getByText(/2 anonymous answers counted/),
+  ).toBeInTheDocument()
+
+  await user.click(within(sheet).getByRole("button", { name: "Done" }))
+  expect(
+    await within(feedPage()).findByText(/4 questions this week/),
+  ).toBeInTheDocument()
+  const you = screen.getByLabelText("You", { selector: ".page" })
+  expect(
+    within(you).getByText(/attacks along the Chad–Sudan border/),
+  ).toBeInTheDocument()
 })
 
-test("shows the status and count from the API, fetched from the same origin", async () => {
-  const fetchStub = stubFetch(jsonResponse(HEALTH_OK, HTTP_OK))
-
-  render(<App />)
-
-  const status = await screen.findByText(/database query succeeded/i)
-  expect(status).toBeVisible()
-  expect(screen.getByText(`${SCHEMA_OBJECTS}`)).toBeVisible()
-  expect(screen.queryByRole("alert")).not.toBeInTheDocument()
-  expect(fetchStub).toHaveBeenCalledWith("/api/health")
+test("an anonymous expert is told their note goes to ACAPS only", async () => {
+  const user = await jumpTo(/anonymous expert/i)
+  await user.click(
+    within(feedPage()).getByText(/anything happening in eastern Chad/),
+  )
+  expect(
+    within(screen.getByRole("dialog")).getByPlaceholderText(
+      /Only ACAPS sees this/,
+    ),
+  ).toBeInTheDocument()
 })
 
-test("shows an error with the API's detail on a 503", async () => {
-  stubFetch(jsonResponse(HEALTH_FAILED, HTTP_SERVICE_UNAVAILABLE))
+test("News stays locked for a lapsed expert until they answer one card", async () => {
+  const user = await jumpTo(/lapsed/i)
+  expect(
+    within(newsPage()).getByText("This week’s update is waiting"),
+  ).toBeInTheDocument()
 
-  render(<App />)
+  await user.click(
+    within(feedPage()).getByText(/attacks along the Chad–Sudan border/),
+  )
+  const sheet = screen.getByRole("dialog")
+  await user.click(
+    within(sheet).getByRole("button", { name: "That’s about right" }),
+  )
+  await user.click(
+    await within(sheet).findByRole("button", { name: "Skip and send" }),
+  )
 
-  const alert = await screen.findByRole("alert")
-  expect(alert).toHaveTextContent(HEALTH_FAILED.detail)
-  expect(screen.queryByText(/query succeeded/i)).not.toBeInTheDocument()
+  expect(
+    within(newsPage()).queryByText("This week’s update is waiting"),
+  ).not.toBeInTheDocument()
 })
 
-test.each([
-  ["a network failure", new TypeError("Failed to fetch")],
-  [
-    "the proxy's error when the backend is down",
-    new Response("", { status: HTTP_BAD_GATEWAY }),
-  ],
-  [
-    "a 200 that is not JSON",
-    new Response("<!doctype html>", { status: HTTP_OK }),
-  ],
-  ["a 200 that does not say ok", jsonResponse(HEALTH_FAILED, HTTP_OK)],
-  ["a 200 with no count", jsonResponse({ status: "ok", api: "up" }, HTTP_OK)],
-])("shows an error on %s", async (_name, result) => {
-  stubFetch(result)
-
-  render(<App />)
-
-  const alert = await screen.findByRole("alert")
-  expect(alert).toHaveTextContent(/could not get the health status/i)
-  expect(screen.queryByText(/query succeeded/i)).not.toBeInTheDocument()
+test("a caught-up expert sees an empty feed, their impact, and their standing", async () => {
+  await jumpTo(/all caught up/i)
+  expect(
+    within(feedPage()).getByText("You’re all caught up"),
+  ).toBeInTheDocument()
+  const you = screen.getByLabelText("You", { selector: ".page" })
+  expect(
+    within(you).getByText("Your estimates carry weight"),
+  ).toBeInTheDocument()
+  expect(
+    within(you).getByText(/lowered this from 20% to 10%/),
+  ).toBeInTheDocument()
 })

@@ -41,15 +41,13 @@ export default defineConfig([
     },
   },
   {
-    // Evin's hand-built prototype (screens, mock API, copy). Its types are hand-written until the
-    // backend's OpenAPI types land in schema.gen.ts; tighten this back as each screen is wired.
+    // Evin's hand-built prototype (pages, components, in-browser data). Its types are hand-written
+    // and its animation values are tuned by eye; tighten this back if the screens get wired to the API.
     files: [
       "src/App.tsx",
-      "src/components.tsx",
-      "src/copy.ts",
-      "src/api/mockApi.ts",
-      "src/api/types.ts",
-      "src/screens/{Onboarding,TriggerScreen,HomeScreen,Briefs}.tsx",
+      "src/components/**",
+      "src/pages/**",
+      "src/data/**",
       "src/screens/exported/**",
     ],
     rules: {
