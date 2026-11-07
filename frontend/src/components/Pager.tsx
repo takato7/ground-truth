@@ -7,6 +7,8 @@ import {
 } from "motion/react"
 import { useRef, useState, type ReactNode, type RefObject } from "react"
 import type { LucideIcon } from "lucide-react"
+import { Badge } from "../ui"
+import "./Pager.css"
 
 export interface PageDef {
   id: string
@@ -91,7 +93,7 @@ export function TabBar({
                   strokeWidth={i === index ? 2.3 : 1.8}
                   aria-hidden
                 />
-                {!!p.badge && <span className="tab-badge">{p.badge}</span>}
+                <Badge count={p.badge ?? 0} />
               </span>
               {p.label}
             </button>

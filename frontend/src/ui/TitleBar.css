@@ -1,0 +1,36 @@
+.titlebar {
+  /* Not positioned: the identity card anchors to the phone, not the bar. */
+  display: grid;
+  grid-template-columns: 56px 1fr 56px;
+  align-items: center;
+  /* Top inset clears the status bar. */
+  padding: 50px var(--space-3) var(--space-2);
+  border-bottom: 1px solid var(--border-interior);
+  background: var(--bg-app);
+}
+.titlebar-side {
+  display: flex;
+}
+.titlebar-trailing {
+  justify-content: flex-end;
+}
+.titlebar-title {
+  position: relative;
+  height: 22px;
+  text-align: center;
+}
+
+.bar-btn {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  color: var(--fg-primary);
+}
+
+/* Page names stack in the same spot and crossfade with the swipe. */
+.titlebar-page {
+  position: absolute;
+  inset: 0;
+}

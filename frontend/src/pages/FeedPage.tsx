@@ -1,15 +1,19 @@
-import { ArrowRight, PartyPopper } from "lucide-react"
+import { ArrowRight, Inbox } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
-import { FeedCard, SPRING } from "../components/FeedCard"
-import { IdentityChip, PageHeader } from "../components/ui"
+import type { ReactNode } from "react"
+import { KIND, KIND_ORDER } from "../components/kind"
+import { QuestionCard } from "../components/QuestionCard"
 import { useStore } from "../data/store"
 import type { Card } from "../data/types"
+import { Button, Callout, CardList, Divider, Page, Text, spring } from "../ui"
 
-export interface OpenSheet {
-  (card: Card, from: "feed" | "you", el: HTMLElement): void
-}
+export type OpenSheet = (
+  card: Card,
+  from: "feed" | "you",
+  el: HTMLElement,
+) => void
 
-/** Slot that keeps its height while its card is open as a sheet, so the list doesn't jump. */
+/** Keeps a card's place (and height) in its list while it's open as a sheet. */
 export function CardSlot({
   active,
   height,
@@ -17,7 +21,7 @@ export function CardSlot({
 }: {
   active: boolean
   height?: number
-  children: React.ReactNode
+  children: ReactNode
 }) {
   return active ? (
     <div className="card-ghost" style={{ height }} />
@@ -25,6 +29,8 @@ export function CardSlot({
     <>{children}</>
   )
 }
+
+const instant = { opacity: 0, transition: { duration: 0 } }
 
 export function FeedPage({
   activeId,
@@ -37,60 +43,75 @@ export function FeedPage({
   onOpen: OpenSheet
   onGoNews: () => void
 }) {
-  const { open, state } = useStore()
+  const { open } = useStore()
   const left = open.length
 
+  // One flat list (dividers + cards) so AnimatePresence can reflow everything together.
+  const items = KIND_ORDER.flatMap((kind) => {
+    const cards = open.filter((c) => c.kind === kind)
+    if (!cards.length) return []
+    return [
+      <motion.div
+        key={`divider-${kind}`}
+        layout="position"
+        transition={spring.layout}
+        exit={instant}
+      >
+        <Divider>{KIND[kind].divider}</Divider>
+      </motion.div>,
+      ...cards.map((card) => (
+        <motion.div
+          key={card.id}
+          layout
+          transition={spring.layout}
+          exit={instant}
+        >
+          <CardSlot active={activeId === card.id} height={activeHeight}>
+            <QuestionCard
+              card={card}
+              layoutId={`feed-${card.id}`}
+              onOpen={(el) => onOpen(card, "feed", el)}
+            />
+          </CardSlot>
+        </motion.div>
+      )),
+    ]
+  })
+
   return (
-    <div className="page-inner">
-      <PageHeader
-        title="Feed"
-        right={<IdentityChip identity={state.identity} />}
-      />
-      <p className="feed-sub">
+    <Page>
+      <Text role="meta">
         {left
           ? `${left} ${left === 1 ? "question" : "questions"} this week · about ${left < 3 ? "a minute" : "two minutes"}`
           : "Nothing left this week"}
-      </p>
+      </Text>
 
-      <div className="card-list">
+      <CardList>
         <AnimatePresence initial={false} mode="popLayout">
-          {open.map((card) => (
-            <motion.div
-              key={card.id}
-              layout
-              transition={SPRING}
-              exit={{ opacity: 0, transition: { duration: 0 } }}
-            >
-              <CardSlot active={activeId === card.id} height={activeHeight}>
-                <FeedCard
-                  card={card}
-                  layoutId={`feed-${card.id}`}
-                  onOpen={(el) => onOpen(card, "feed", el)}
-                />
-              </CardSlot>
-            </motion.div>
-          ))}
+          {items}
           {left === 0 && (
             <motion.div
               key="caught-up"
               layout
-              className="caught-up"
               initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1, transition: { delay: 0.25 } }}
             >
-              <PartyPopper size={28} aria-hidden />
-              <h2>You’re all caught up</h2>
-              <p>
-                New questions arrive on Mondays. The latest from ACAPS is on
-                News.
-              </p>
-              <button className="pill-link" onClick={onGoNews}>
-                Open News <ArrowRight size={16} aria-hidden />
-              </button>
+              <Callout
+                layout="center"
+                icon={Inbox}
+                title="No open questions"
+                action={
+                  <Button size="sm" iconEnd={ArrowRight} onClick={onGoNews}>
+                    Read the latest update
+                  </Button>
+                }
+              >
+                New questions are sent each Monday.
+              </Callout>
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
-    </div>
+      </CardList>
+    </Page>
   )
 }

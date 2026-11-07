@@ -1,15 +1,20 @@
 import { House, Newspaper, UserRound } from "lucide-react"
 import { AnimatePresence, LayoutGroup, MotionConfig } from "motion/react"
 import { useEffect, useState } from "react"
+import { AppTitleBar } from "./components/AppTitleBar"
 import { CardSheet } from "./components/CardSheet"
+import { DeviceFrame } from "./components/DeviceFrame"
+import { ArticleSheet } from "./components/ArticleSheet"
 import { Pager, TabBar, usePager, type PageDef } from "./components/Pager"
 import { SCENARIOS, type ScenarioId } from "./data/scenarios"
 import { StoreProvider, useStore } from "./data/store"
-import type { Card } from "./data/types"
+import type { Article, Card } from "./data/types"
 import { FeedPage } from "./pages/FeedPage"
 import { NewsPage } from "./pages/NewsPage"
 import { Onboarding } from "./pages/Onboarding"
 import { YouPage } from "./pages/YouPage"
+import { useTheme, type ThemeMode } from "./ui"
+import "./App.css"
 
 interface Sheet {
   card: Card
@@ -21,6 +26,10 @@ function Main() {
   const { state, dispatch, open } = useStore()
   const { ref, progress, index, goTo } = usePager(3)
   const [sheet, setSheet] = useState<Sheet | null>(null)
+  const [article, setArticle] = useState<{
+    article: Article
+    height: number
+  } | null>(null)
 
   // Opening the You page clears its "new answers" badge.
   useEffect(() => {
@@ -56,7 +65,19 @@ function Main() {
       id: "news",
       label: "News",
       icon: Newspaper,
-      content: <NewsPage onGoFeed={() => goTo(0)} />,
+      content: (
+        <NewsPage
+          activeId={article?.article.id}
+          activeHeight={article?.height}
+          onOpen={(a, el) =>
+            setArticle({
+              article: a,
+              height: el.getBoundingClientRect().height,
+            })
+          }
+          onGoFeed={() => goTo(0)}
+        />
+      ),
     },
     {
       id: "you",
@@ -75,7 +96,10 @@ function Main() {
 
   return (
     <LayoutGroup>
-      <Pager pagerRef={ref} pages={pages} />
+      <div className="app-column">
+        <AppTitleBar labels={pages.map((p) => p.label)} progress={progress} />
+        <Pager pagerRef={ref} pages={pages} />
+      </div>
       <TabBar pages={pages} progress={progress} index={index} onSelect={goTo} />
       <AnimatePresence>
         {sheet && (
@@ -91,6 +115,16 @@ function Main() {
             onClose={() => setSheet(null)}
           />
         )}
+        {article && (
+          <ArticleSheet
+            key={`news-${article.article.id}`}
+            article={article.article}
+            layoutId={`news-${article.article.id}`}
+            openQuestions={open.length}
+            onGoFeed={() => goTo(0)}
+            onClose={() => setArticle(null)}
+          />
+        )}
       </AnimatePresence>
     </LayoutGroup>
   )
@@ -99,6 +133,7 @@ function Main() {
 /** Dev-only: jump to any demo situation. Replaces login and the old reset button. */
 function DevBar({ onJump }: { onJump: () => void }) {
   const { scenario, dispatch } = useStore()
+  const { mode, setMode } = useTheme()
   const jump = (id: ScenarioId) => {
     dispatch({ type: "scenario", id })
     onJump()
@@ -117,6 +152,15 @@ function DevBar({ onJump }: { onJump: () => void }) {
         ))}
       </select>
       <button onClick={() => jump(scenario)}>Restart</button>
+      <select
+        value={mode}
+        onChange={(e) => setMode(e.target.value as ThemeMode)}
+        aria-label="Theme"
+      >
+        <option value="system">System theme</option>
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+      </select>
     </div>
   )
 }
@@ -127,9 +171,9 @@ function Shell() {
   const [epoch, setEpoch] = useState(0)
   return (
     <div className="shell">
-      <div className="phone" key={epoch}>
+      <DeviceFrame screenKey={epoch}>
         {state.onboarding === "done" ? <Main /> : <Onboarding />}
-      </div>
+      </DeviceFrame>
       <DevBar onJump={() => setEpoch((n) => n + 1)} />
     </div>
   )

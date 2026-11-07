@@ -1,0 +1,161 @@
+/*
+ * Groundline design tokens.
+ *
+ * Three layers, and components only ever use the last two:
+ *   1. Palette   – raw values. The warm 12-step grey is Origami's scale (gray-1 lightest).
+ *   2. Semantic  – what a value is for: bg-*, fg-*, border-*. Dark mode redefines only these.
+ *   3. Tones     – neutral, or a light tint of the ACAPS teal for the few things that earn an accent
+ *                  (an answer that moved ACAPS, a strong track record). Each sets --tone-bg / --tone-fg,
+ *                  and anything inside a toned surface (chips, meters) picks them up.
+ *
+ * Theme: <html data-theme="light|dark">, set by ui/theme.tsx (follows the system unless overridden).
+ * Type: Apple's iOS text styles at the default (Large) size, as .t-* classes in base.css.
+ */
+
+:root {
+  /* --- 1. Palette -------------------------------------------------------- */
+  --gray-1: #fafafa;
+  --gray-2: #f6f6f6;
+  --gray-3: #f2f2f1;
+  --gray-4: #eaeaea;
+  --gray-5: #dedddd;
+  --gray-6: #abaaa9;
+  --gray-7: #595756;
+  --gray-8: #403f3d;
+  --gray-9: #2e2c2b;
+  --gray-10: #262423;
+  --gray-11: #1f1d1b;
+  --gray-12: #181614;
+  --white: #ffffff;
+  --black: #000000;
+
+  /* ACAPS brand, from the wordmark. */
+  --acaps-teal: #0196ba;
+  --acaps-ink: #1c141c;
+
+  --red: #e5484d;
+
+  /* --- 2. Semantic: light -------------------------------------------------- */
+  /* Surface height: canvas (desk behind the phone) < app (screen) < surface (cards) < raised. */
+  --bg-canvas: var(--gray-5);
+  --bg-app: var(--gray-3);
+  --bg-surface: var(--white);
+  --bg-raised: var(--white);
+  --bg-input: var(--white);
+  /* A control sitting on a toned surface: lets the tint show through. */
+  /* Recessed into a surface: answer choices, chips, icon buttons, bars. */
+  --bg-well: var(--gray-2);
+  --bg-invert: var(--gray-12);
+  --bg-scrim: color-mix(in srgb, var(--gray-12) 38%, transparent);
+  --bg-glass: color-mix(in srgb, var(--gray-2) 62%, transparent);
+
+  --fg-primary: var(--gray-12);
+  --fg-secondary: var(--gray-7);
+  --fg-tertiary: var(--gray-6);
+  --fg-invert: var(--gray-1);
+  --fg-brand: var(--acaps-teal);
+  --fg-danger: var(--red);
+
+  --border-edge: color-mix(in srgb, var(--gray-12) 14%, transparent);
+  --border-interior: color-mix(in srgb, var(--gray-12) 8%, transparent);
+  --border-glass: color-mix(in srgb, var(--white) 70%, transparent);
+  --border-focus: var(--fg-primary);
+
+  /* Meter and bar tracks. */
+  --track: color-mix(in srgb, var(--fg-primary) 10%, transparent);
+  --track-fill: var(--fg-primary);
+  --track-fill-muted: var(--fg-tertiary);
+
+  --shadow-raised:
+    0 1px 2px color-mix(in srgb, var(--gray-12) 6%, transparent),
+    0 2px 8px color-mix(in srgb, var(--gray-12) 4%, transparent);
+  --shadow-floating:
+    0 10px 30px rgba(0, 0, 0, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  --shadow-sheet: 0 20px 50px rgba(0, 0, 0, 0.25);
+  --shadow-popover: 0 16px 40px rgba(0, 0, 0, 0.14);
+
+  /* --- 3. Tones: light ------------------------------------------------------ */
+  --tone-neutral-bg: var(--bg-surface);
+  --tone-neutral-fg: var(--fg-primary);
+  --tone-brand-bg: color-mix(in srgb, var(--acaps-teal) 8%, var(--white));
+  /* Darkened teal so text on the tint passes contrast. */
+  --tone-brand-fg: #016b85;
+
+  /* Spot illustrations (ui/Illustration): ink outline, teal fill, pale teal, paper. */
+  --illo-ink: var(--gray-11);
+  --illo-accent: var(--acaps-teal);
+  --illo-tint: color-mix(in srgb, var(--acaps-teal) 24%, var(--white));
+  --illo-paper: var(--bg-surface);
+
+  /* --- Shape, space, motion (theme-independent) ---------------------------- */
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+  --radius-xl: 24px;
+  --radius-pill: 9999px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  /* Side margin of every page, like iOS's standard 20pt layout margin. */
+  --gutter: var(--space-5);
+
+  --duration-quick: 150ms;
+  --duration-fast: 250ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --font-family:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", system-ui,
+    sans-serif;
+
+  color-scheme: light;
+}
+
+/* --- 2 + 3. Dark: only semantic tokens and tones change ---------------------- */
+:root[data-theme="dark"] {
+  --bg-canvas: var(--black);
+  --bg-app: var(--gray-12);
+  --bg-surface: var(--gray-10);
+  --bg-raised: var(--gray-9);
+  --bg-input: var(--gray-9);
+  --bg-well: color-mix(in srgb, var(--white) 6%, transparent);
+  --bg-invert: var(--gray-1);
+  --bg-scrim: color-mix(in srgb, var(--black) 55%, transparent);
+  --bg-glass: color-mix(in srgb, var(--gray-10) 62%, transparent);
+
+  --fg-primary: var(--gray-1);
+  --fg-secondary: var(--gray-6);
+  /* Between gray-6 and gray-7: gray-7 alone is unreadable on tinted dark surfaces. */
+  --fg-tertiary: color-mix(in srgb, var(--gray-6) 60%, var(--gray-7));
+  --fg-invert: var(--gray-12);
+  --fg-danger: #ff6166;
+
+  --border-edge: color-mix(in srgb, var(--gray-1) 16%, transparent);
+  --border-interior: color-mix(in srgb, var(--gray-1) 9%, transparent);
+  --border-glass: color-mix(in srgb, var(--white) 12%, transparent);
+
+  --shadow-raised: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-floating:
+    0 10px 30px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --shadow-sheet: 0 20px 50px rgba(0, 0, 0, 0.6);
+  --shadow-popover: 0 16px 40px rgba(0, 0, 0, 0.5);
+
+  --tone-brand-bg: color-mix(in srgb, var(--acaps-teal) 14%, var(--gray-10));
+  --tone-brand-fg: #5ccbe6;
+
+  /* Dark goes to a line style: the outline glows in the light brand teal (it keeps the rays and
+     details visible, which dark outlines lose), and the fills drop to deep teal on the app
+     background so the drawing keeps its two tones without turning into a white negative. */
+  --illo-ink: var(--tone-brand-fg);
+  --illo-accent: color-mix(in srgb, var(--acaps-teal) 45%, var(--gray-12));
+  --illo-tint: color-mix(in srgb, var(--acaps-teal) 18%, var(--gray-12));
+  --illo-paper: var(--gray-11);
+
+  color-scheme: dark;
+}

@@ -1,0 +1,18 @@
+.news {
+  transition: filter var(--duration-fast);
+}
+.news.locked {
+  filter: blur(7px);
+  opacity: 0.6;
+  pointer-events: none;
+  user-select: none;
+}
+.news-lock {
+  position: absolute;
+  top: 96px;
+  left: var(--gutter);
+  right: var(--gutter);
+}
+.news-lock .callout-icon {
+  color: var(--fg-primary);
+}

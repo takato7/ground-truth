@@ -1,0 +1,105 @@
+/* Standard onboarding: step dots on top, content centred in the middle, actions on the thumb line. */
+.onboarding {
+  height: 100%;
+  /* Top clears the status bar and island. */
+  padding: 54px var(--gutter) var(--space-8);
+  display: flex;
+  flex-direction: column;
+}
+
+.onboarding-top {
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
+  min-height: 44px;
+}
+.onboarding-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.onboarding-dots li {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--track);
+  transition:
+    width var(--duration-fast) var(--ease-out),
+    background var(--duration-fast);
+}
+.onboarding-dots li.current {
+  width: 18px;
+  background: var(--fg-primary);
+}
+
+.onboarding-step {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+.onboarding-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  /* Centre while it fits; margins collapse to 0 and it scrolls when it doesn't. */
+  padding-block: var(--space-4);
+}
+.onboarding-content > :first-child {
+  margin-top: auto;
+}
+.onboarding-content > :last-child {
+  margin-bottom: auto;
+}
+
+.onboarding-intro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  text-align: center;
+  padding-inline: var(--space-2);
+}
+.onboarding-head {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--space-6);
+}
+/* ACAPS small at the top; Groundline is the product, ACAPS the organisation behind it. */
+.onboarding-acaps {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-2);
+}
+.onboarding-acaps .logo img {
+  height: 20px;
+}
+
+.onboarding-promises {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  margin: 0;
+  padding: 0 var(--space-2);
+  list-style: none;
+}
+.onboarding-promises li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.onboarding-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  text-align: center;
+}

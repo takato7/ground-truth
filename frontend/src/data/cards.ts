@@ -3,7 +3,7 @@
 // Numbers come from ACAPS's R1043 record (src/mocks/r1043.json); peers are fictional.
 
 import r1043 from "../mocks/r1043.json"
-import type { Card, CardKind, Stance } from "./types"
+import type { Card, Stance } from "./types"
 
 export const CURRENT_ROUND = "2026-11-02"
 export const PANEL = "Eastern Chad"
@@ -27,10 +27,10 @@ export const likelihoodLabel = (v: number | null | undefined) =>
   LIKELIHOOD.find((l) => l.value === v)?.label ?? "Not sure"
 
 export const STANCE: Record<Stance, string> = {
-  about_right: "That’s about right",
-  further: "It’s further along",
-  not_as_far: "It’s not as far along",
-  something_else: "Something else is going on",
+  about_right: "About right",
+  further: "Further along",
+  not_as_far: "Not as far along",
+  something_else: "Something else is happening",
 }
 
 export const STANCE_SHORT: Record<Stance, string> = {
@@ -38,12 +38,6 @@ export const STANCE_SHORT: Record<Stance, string> = {
   further: "Further along",
   not_as_far: "Not as far",
   something_else: "Something else",
-}
-
-export const KIND_LABEL: Record<CardKind, string> = {
-  risk: "Risk check",
-  trigger: "Trigger check",
-  open: "Open question",
 }
 
 const P = {
@@ -59,11 +53,13 @@ export const CARDS: Card[] = [
     kind: "risk",
     round: CURRENT_ROUND,
     topic: PANEL,
+    sourceId: r1043.id,
+    sourceTitle: r1043.title,
     question:
       "Will Sudan’s war make the crisis in eastern Chad clearly worse in the next six months?",
     context:
-      "More refugees crossing, more strain on camps and services, more insecurity on the border. ACAPS currently rates this as likely.",
-    acapsLikelihood: 70,
+      "More refugees crossing, more strain on camps and services, more insecurity on the border. ACAPS rates its probability as High.",
+    acapsProbability: r1043.probability,
     peers: [
       {
         name: P.tomas,
@@ -85,8 +81,9 @@ export const CARDS: Card[] = [
     kind: "trigger",
     round: CURRENT_ROUND,
     topic: "Cross-border attacks",
-    question:
-      "Are attacks along the Chad–Sudan border becoming a regular thing?",
+    sourceId: `${r1043.id} · T0618`,
+    sourceTitle: trigger("T0618").title,
+    question: "Are attacks along the Chad–Sudan border becoming sustained?",
     context:
       "Drone strikes, shelling and armed raids near Adré, Tiné and other border towns.",
     rate: rateOf("T0618"),
@@ -114,6 +111,8 @@ export const CARDS: Card[] = [
     kind: "trigger",
     round: CURRENT_ROUND,
     topic: "Airports and bases",
+    sourceId: `${r1043.id} · T0619`,
+    sourceTitle: trigger("T0619").title,
     question:
       "Could Sudan’s war reach airports and military bases inside Chad?",
     context:
@@ -139,6 +138,8 @@ export const CARDS: Card[] = [
     kind: "trigger",
     round: CURRENT_ROUND,
     topic: "Armed groups across the border",
+    sourceId: `${r1043.id} · T0620`,
+    sourceTitle: trigger("T0620").title,
     question:
       "Are armed groups on either side of the border being drawn into the fight?",
     context:
@@ -167,6 +168,8 @@ export const CARDS: Card[] = [
     kind: "open",
     round: CURRENT_ROUND,
     topic: PANEL,
+    sourceId: r1043.id,
+    sourceTitle: r1043.title,
     question:
       "Is anything happening in eastern Chad that ACAPS isn’t watching?",
     context:
@@ -191,11 +194,13 @@ export const CARDS: Card[] = [
     kind: "risk",
     round: "2026-10-05",
     topic: PANEL,
+    sourceId: r1043.id,
+    sourceTitle: r1043.title,
     question:
       "Will Sudan’s war make the crisis in eastern Chad clearly worse in the next six months?",
     context:
-      "More refugees crossing, more strain on camps and services, more insecurity on the border. ACAPS rated this as likely.",
-    acapsLikelihood: 70,
+      "More refugees crossing, more strain on camps and services, more insecurity on the border. ACAPS rated its probability as High.",
+    acapsProbability: r1043.probability,
     peers: [
       { name: P.tomas, likelihood: 70 },
       { name: P.halima, likelihood: 70 },
@@ -209,6 +214,8 @@ export const CARDS: Card[] = [
     kind: "open",
     round: "2026-10-05",
     topic: PANEL,
+    sourceId: r1043.id,
+    sourceTitle: r1043.title,
     question:
       "Is anything happening in eastern Chad that ACAPS isn’t watching?",
     context:
@@ -217,29 +224,33 @@ export const CARDS: Card[] = [
       { name: P.awa, note: "Shelter kits ran out in Adré transit site." },
       { name: null },
     ],
-    impact:
-      "Picked up in ACAPS’s 30 Sep update: funding gaps for shelter and food.",
+    // After the export's last R1043 update (30 Sep), so it can't contradict it.
+    impact: "ACAPS added shelter shortages at Adré to its monitoring of R1043.",
   },
   {
-    id: "w36-T0619",
+    id: "w41-T0619",
     kind: "trigger",
-    round: "2026-09-07",
+    round: "2026-10-05",
     topic: "Airports and bases",
+    sourceId: `${r1043.id} · T0619`,
+    sourceTitle: trigger("T0619").title,
     question:
       "Could Sudan’s war reach airports and military bases inside Chad?",
     context:
       "Sudanese armed actors have threatened sites like Amdjarass airport, border posts and army positions.",
-    rate: 20,
-    ask: "ACAPS rates attacks on airports and bases as 20% of the way to direct attacks on these sites. Does that match what you’re seeing?",
+    // The export has T0619 at 10% since June; the panel confirmed it rather than moved it.
+    rate: rateOf("T0619"),
+    ask: `ACAPS rates attacks on airports and bases as ${rateOf("T0619")}% of the way to direct attacks on these sites. Does that match what you’re seeing?`,
     acapsTitle: trigger("T0619").title,
     acapsGoal: trigger("T0619").quantitativeObjective,
     peers: [
-      { name: P.tomas, stance: "not_as_far" },
-      { name: P.halima, stance: "not_as_far" },
-      { name: P.awa, stance: "about_right" },
-      { name: null, stance: "not_as_far" },
+      { name: P.tomas, stance: "about_right" },
+      { name: P.halima, stance: "about_right" },
+      { name: P.awa, stance: "not_as_far" },
+      { name: null, stance: "about_right" },
     ],
-    impact: "ACAPS lowered this from 20% to 10% after the panel’s answers.",
+    impact:
+      "ACAPS kept this trigger at 10% after reviewing the panel’s answers.",
   },
 ]
 

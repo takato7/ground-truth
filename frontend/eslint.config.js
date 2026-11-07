@@ -48,6 +48,7 @@ export default defineConfig([
       "src/components/**",
       "src/pages/**",
       "src/data/**",
+      "src/ui/**",
       "src/screens/exported/**",
     ],
     rules: {

@@ -4,6 +4,9 @@ import { beforeEach, expect, test } from "vitest"
 import { App } from "./App"
 
 const FEED_SIZE = 5
+// R1043 has four updates, R1066 two and R1055 one; each risk also has its "New risk" post.
+const REGION_UPDATES = 7
+const REGION_RISKS = 3
 
 beforeEach(() => {
   localStorage.clear()
@@ -23,16 +26,14 @@ async function jumpTo(label: RegExp) {
 const feedPage = () => screen.getByLabelText("Feed", { selector: ".page" })
 const newsPage = () => screen.getByLabelText("News", { selector: ".page" })
 
-test("an invited expert redeems a code, picks how to appear, and lands on the feed", async () => {
+test("an invited expert sees why it pays off, enters any code, picks how to appear, and lands on the feed", async () => {
   const user = userEvent.setup()
   render(<App />)
 
-  await user.type(screen.getByLabelText("Invite code"), "nope")
-  await user.click(screen.getByRole("button", { name: /continue/i }))
-  expect(screen.getByText(/isn’t valid/)).toBeInTheDocument()
-
-  await user.clear(screen.getByLabelText("Invite code"))
-  await user.type(screen.getByLabelText("Invite code"), "CHAD-E1")
+  expect(screen.getByText("Your view sharpens the picture")).toBeInTheDocument()
+  await user.click(screen.getByRole("button", { name: /get started/i }))
+  expect(screen.getByRole("button", { name: /continue/i })).toBeDisabled()
+  await user.type(screen.getByLabelText("Invite code"), "anything")
   await user.click(screen.getByRole("button", { name: /continue/i }))
   await user.click(screen.getByRole("button", { name: /anonymous/i }))
   await user.click(screen.getByRole("button", { name: /^start/i }))
@@ -42,7 +43,29 @@ test("an invited expert redeems a code, picks how to appear, and lands on the fe
       `${FEED_SIZE} questions this week · about two minutes`,
     ),
   ).toBeInTheDocument()
-  expect(within(feedPage()).getByText("Anonymous")).toBeInTheDocument()
+  expect(
+    screen.getByRole("button", { name: "How you appear: Anonymous" }),
+  ).toBeInTheDocument()
+})
+
+test("changing how you appear takes a choice and a confirm, never a single tap", async () => {
+  const user = await jumpTo(/regular expert/i)
+  const toggle = () => screen.getByRole("button", { name: /How you appear/ })
+  expect(toggle()).toHaveAccessibleName("How you appear: Known to ACAPS")
+
+  await user.click(toggle())
+  const card = screen.getByRole("dialog", { name: "How you appear" })
+  await user.click(within(card).getByRole("button", { name: /^Anonymous/ }))
+  // Picking alone changes nothing; only the confirm button applies it.
+  expect(toggle()).toHaveAccessibleName("How you appear: Known to ACAPS")
+  await user.click(
+    within(card).getByRole("button", { name: "Switch to Anonymous" }),
+  )
+
+  expect(toggle()).toHaveAccessibleName("How you appear: Anonymous")
+  expect(
+    screen.queryByRole("dialog", { name: "How you appear" }),
+  ).not.toBeInTheDocument()
 })
 
 test("answering a trigger card shows the panel, then the card leaves the feed for the You page", async () => {
@@ -52,16 +75,12 @@ test("answering a trigger card shows the panel, then the card leaves the feed fo
   )
 
   const sheet = screen.getByRole("dialog")
+  await user.click(within(sheet).getByRole("button", { name: "Further along" }))
   await user.click(
-    within(sheet).getByRole("button", { name: "It’s further along" }),
-  )
-  await user.click(
-    await within(sheet).findByRole("button", { name: "Skip and send" }),
+    await within(sheet).findByRole("button", { name: "Send without a note" }),
   )
 
-  expect(
-    await within(sheet).findByText("Here’s where the panel stands"),
-  ).toBeInTheDocument()
+  expect(await within(sheet).findByText("Panel responses")).toBeInTheDocument()
   expect(
     within(sheet).getByText(`${FEED_SIZE + 1} experts answered`),
   ).toBeInTheDocument()
@@ -88,43 +107,54 @@ test("an anonymous expert is told their note goes to ACAPS only", async () => {
   )
   expect(
     within(screen.getByRole("dialog")).getByPlaceholderText(
-      /Only ACAPS sees this/,
+      /Visible to ACAPS only/,
     ),
   ).toBeInTheDocument()
 })
 
 test("News stays locked for a lapsed expert until they answer one card", async () => {
   const user = await jumpTo(/lapsed/i)
-  expect(
-    within(newsPage()).getByText("This week’s update is waiting"),
-  ).toBeInTheDocument()
+  expect(within(newsPage()).getByText("Update locked")).toBeInTheDocument()
 
   await user.click(
     within(feedPage()).getByText(/attacks along the Chad–Sudan border/),
   )
   const sheet = screen.getByRole("dialog")
+  await user.click(within(sheet).getByRole("button", { name: "About right" }))
   await user.click(
-    within(sheet).getByRole("button", { name: "That’s about right" }),
-  )
-  await user.click(
-    await within(sheet).findByRole("button", { name: "Skip and send" }),
+    await within(sheet).findByRole("button", { name: "Send without a note" }),
   )
 
   expect(
-    within(newsPage()).queryByText("This week’s update is waiting"),
+    within(newsPage()).queryByText("Update locked"),
   ).not.toBeInTheDocument()
 })
 
 test("a caught-up expert sees an empty feed, their impact, and their standing", async () => {
   await jumpTo(/all caught up/i)
-  expect(
-    within(feedPage()).getByText("You’re all caught up"),
-  ).toBeInTheDocument()
+  expect(within(feedPage()).getByText("No open questions")).toBeInTheDocument()
   const you = screen.getByLabelText("You", { selector: ".page" })
+  expect(within(you).getByText("Every round answered")).toBeInTheDocument()
+  expect(within(you).getByText(/kept this trigger at 10%/)).toBeInTheDocument()
+})
+
+test("News is ACAPS's own posts for the region, and a post opens with the risk it belongs to", async () => {
+  const user = await jumpTo(/regular expert/i)
+  const news = newsPage()
   expect(
-    within(you).getByText("Your estimates carry weight"),
+    within(news).getByText(/3 risks in and around eastern Chad/),
   ).toBeInTheDocument()
-  expect(
-    within(you).getByText(/lowered this from 20% to 10%/),
-  ).toBeInTheDocument()
+  expect(within(news).getAllByText("Update")).toHaveLength(REGION_UPDATES)
+  expect(within(news).getAllByText("New risk")).toHaveLength(REGION_RISKS)
+  expect(within(news).queryByText(/E1 settlement plan/)).not.toBeInTheDocument()
+
+  await user.click(
+    within(news).getByText(/^The risk remains active, although no significant/),
+  )
+  const sheet = screen.getByRole("dialog", {
+    name: /^The risk remains active, although no significant/,
+  })
+  expect(within(sheet).getByText("30 September 2026")).toBeInTheDocument()
+  expect(within(sheet).getByText("55,000+")).toBeInTheDocument()
+  expect(within(sheet).getByText("40% completed")).toBeInTheDocument()
 })

@@ -5,66 +5,134 @@ import {
   useDragControls,
   type PanInfo,
 } from "motion/react"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, type ReactNode } from "react"
 import { LIKELIHOOD, STANCE } from "../data/cards"
 import type { Answer, Card, Identity, Stance } from "../data/types"
-import { CARD_RADIUS, SPRING, answerSummary } from "./FeedCard"
+import {
+  Button,
+  ChoiceList,
+  DISMISS,
+  IconButton,
+  Meter,
+  SELECT_DELAY_MS,
+  Text,
+  TextField,
+  cx,
+  layoutRadius,
+  spring,
+  surfaceClass,
+} from "../ui"
 import { PanelResults } from "./PanelResults"
-import { KindChip, Meter } from "./ui"
+import { answerSummary } from "./QuestionCard"
+import "./CardSheet.css"
 
 type Step = "likelihood" | "stance" | "note" | "result"
 
+/** One or two questions per card, then the panel's answers. */
 const STEPS: Record<Card["kind"], Step[]> = {
   risk: ["likelihood", "note", "result"],
   trigger: ["stance", "note", "result"],
   open: ["note", "result"],
 }
 
+const SLIDE = 48
 const slide = {
-  enter: (dir: number) => ({ x: dir * 48, opacity: 0 }),
+  enter: (dir: number) => ({ x: dir * SLIDE, opacity: 0 }),
   center: { x: 0, opacity: 1 },
-  exit: (dir: number) => ({ x: dir * -48, opacity: 0 }),
+  exit: (dir: number) => ({ x: dir * -SLIDE, opacity: 0 }),
 }
 
 /** Exit once answered from the feed: the card has left the list, so fly toward the You tab. */
-export const sheetExit = {
-  away: {
-    opacity: 0,
-    scale: 0.4,
-    x: 120,
-    y: 260,
-    transition: { duration: 0.35, ease: [0.4, 0, 0.2, 1] },
-  },
+const flyToYou = {
+  opacity: 0,
+  scale: 0.4,
+  x: 120,
+  y: 260,
+  transition: { duration: 0.35, ease: [0.4, 0, 0.2, 1] },
 } as const
 
-function Choices<T>({
-  options,
-  selected,
-  onPick,
+/** Shared top of every step: an optional recap line, the question, optional context. */
+function Ask({
+  recap,
+  question,
+  context,
 }: {
-  options: { label: string; value: T; quiet?: boolean }[]
-  selected: T | undefined
-  onPick: (v: T) => void
+  recap?: string
+  question: string
+  context?: string
 }) {
   return (
-    <div className="choices">
-      {options.map((o) => (
-        <motion.button
-          key={o.label}
-          whileTap={{ scale: 0.97 }}
-          className={`choice ${selected === o.value ? "selected" : ""} ${o.quiet ? "quiet" : ""}`}
-          onClick={() => onPick(o.value)}
-        >
-          {o.label}
-        </motion.button>
-      ))}
+    <>
+      {recap && <Text role="meta">{recap}</Text>}
+      <Text as="h2" role="title">
+        {question}
+      </Text>
+      {context && <Text color="secondary">{context}</Text>}
+    </>
+  )
+}
+
+function AcapsWording({ card }: { card: Card }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <Button variant="link" size="sm" onClick={() => setOpen((o) => !o)}>
+        {open ? "Hide ACAPS’s wording" : "ACAPS’s wording"}
+      </Button>
+      {open && (
+        <div className="stack gap-1">
+          <Text role="meta" color="primary">
+            {card.acapsTitle}
+          </Text>
+          <Text role="meta">{card.acapsGoal}</Text>
+        </div>
+      )}
+    </>
+  )
+}
+
+/** Header row: grabber (drag handle), back, progress dots, close. */
+export function SheetTop({
+  step,
+  questions,
+  onBack,
+  onClose,
+  onDragStart,
+}: {
+  step: number
+  questions: number
+  onBack?: () => void
+  onClose: () => void
+  onDragStart: (e: React.PointerEvent) => void
+}) {
+  return (
+    <div className="sheet-grab" onPointerDown={onDragStart}>
+      <span className="grabber" />
+      <div className="sheet-top">
+        {onBack ? (
+          <IconButton icon={ChevronLeft} label="Back" onClick={onBack} />
+        ) : (
+          <span className="sheet-top-spacer" />
+        )}
+        {questions > 1 && (
+          <div
+            className="dots"
+            aria-label={`Question ${step + 1} of ${questions}`}
+          >
+            {Array.from({ length: questions }, (_, i) => (
+              <span key={i} className={cx(i <= step && "on")} />
+            ))}
+          </div>
+        )}
+        <IconButton icon={X} label="Close" onClick={onClose} />
+      </div>
     </div>
   )
 }
 
 /**
- * A card opened full-height: one or two questions, then the panel's answers as the reward.
- * Opened from an answered card it goes straight to the results.
+ * A card opened full-height. Grows out of its QuestionCard via the shared layoutId;
+ * drag down, Escape or X closes it. Opened from an answered card it shows the results.
  */
 export function CardSheet({
   card,
@@ -85,16 +153,15 @@ export function CardSheet({
   onClose: () => void
 }) {
   const steps = STEPS[card.kind]
-  const [step, setStep] = useState(answer ? steps.length - 1 : 0)
+  const questions = steps.length - 1
+  const [step, setStep] = useState(answer ? questions : 0)
   const [dir, setDir] = useState(1)
   const [likelihood, setLikelihood] = useState<number | null | undefined>()
   const [stance, setStance] = useState<Stance | undefined>()
   const [note, setNote] = useState("")
-  const [wording, setWording] = useState(false)
   const timer = useRef(0)
   const drag = useDragControls()
   const current = steps[step]
-  const asking = steps.slice(0, -1)
 
   useEffect(() => () => clearTimeout(timer.current), [])
   useEffect(() => {
@@ -107,17 +174,17 @@ export function CardSheet({
     setDir(d)
     setStep((s) => s + d)
   }
-  // Brief pause so the selection registers before the next question slides in.
   const pickThenNext = () => {
     clearTimeout(timer.current)
-    timer.current = window.setTimeout(() => go(1), 200)
+    timer.current = window.setTimeout(() => go(1), SELECT_DELAY_MS)
   }
   const submit = () => {
     onAnswer({ cardId: card.id, likelihood, stance, note: note.trim() })
     go(1)
   }
   const onDragEnd = (_: unknown, info: PanInfo) => {
-    if (info.offset.y > 120 || info.velocity.y > 600) onClose()
+    if (info.offset.y > DISMISS.distance || info.velocity.y > DISMISS.velocity)
+      onClose()
   }
 
   const mine: Answer = answer ?? {
@@ -127,13 +194,96 @@ export function CardSheet({
     stance,
     note: note.trim(),
   }
-  const noteRequired = card.kind === "open"
-  const noteTitle =
-    card.kind === "open"
-      ? card.question
-      : stance === "something_else"
-        ? "What’s going on that ACAPS should know?"
-        : "Anything you’d add?"
+
+  let body: ReactNode
+  if (current === "likelihood") {
+    body = (
+      <>
+        <Ask question={card.question} context={card.context} />
+        <ChoiceList
+          options={LIKELIHOOD.map((l) => ({ ...l, quiet: l.value === null }))}
+          selected={likelihood}
+          onPick={(v) => {
+            setLikelihood(v)
+            pickThenNext()
+          }}
+        />
+      </>
+    )
+  } else if (current === "stance") {
+    body = (
+      <>
+        <Ask question={card.ask ?? card.question} context={card.context} />
+        {card.rate !== undefined && (
+          <Meter value={card.rate} label={`${card.rate}% of the way`} />
+        )}
+        <ChoiceList
+          options={(Object.keys(STANCE) as Stance[]).map((s) => ({
+            label: STANCE[s],
+            value: s,
+            quiet: s === "something_else",
+          }))}
+          selected={stance}
+          onPick={(v) => {
+            setStance(v)
+            pickThenNext()
+          }}
+        />
+        <AcapsWording card={card} />
+      </>
+    )
+  } else if (current === "note") {
+    const open = card.kind === "open"
+    body = (
+      <>
+        <Ask
+          recap={open ? undefined : `You said: ${answerSummary(card, mine)}`}
+          question={
+            open
+              ? card.question
+              : stance === "something_else"
+                ? "What should ACAPS know?"
+                : "Add context (optional)"
+          }
+          context={open ? card.context : undefined}
+        />
+        <TextField
+          multiline
+          label="Your note"
+          maxLength={280}
+          value={note}
+          onChange={setNote}
+          placeholder={
+            identity === "anonymous"
+              ? "Visible to ACAPS only. Never shown to the panel."
+              : "Visible to the panel under your name."
+          }
+        />
+        <Button disabled={open && !note.trim()} onClick={submit}>
+          {open || note.trim() ? "Send" : "Send without a note"}
+        </Button>
+      </>
+    )
+  } else {
+    body = (
+      <>
+        <Ask
+          recap={answer ? undefined : "Answer recorded"}
+          question="Panel responses"
+        />
+        <PanelResults card={card} mine={mine} identity={identity} />
+        {card.impact && answer ? (
+          <Text className="sheet-impact tone-brand">{card.impact}</Text>
+        ) : (
+          <Text role="meta">
+            ACAPS reviews responses weekly. Answers that inform its analysis are
+            marked on your profile.
+          </Text>
+        )}
+        <Button onClick={onClose}>Done</Button>
+      </>
+    )
+  }
 
   return (
     <>
@@ -148,9 +298,9 @@ export function CardSheet({
         role="dialog"
         aria-label={card.question}
         layoutId={layoutId}
-        transition={SPRING}
-        className={`sheet kind-${card.kind}`}
-        style={{ borderRadius: CARD_RADIUS }}
+        transition={spring.layout}
+        className={cx(surfaceClass({ pad: "none" }), "sheet")}
+        style={layoutRadius}
         drag="y"
         dragListener={false}
         dragControls={drag}
@@ -158,7 +308,7 @@ export function CardSheet({
         dragElastic={{ top: 0, bottom: 0.7 }}
         onDragEnd={onDragEnd}
         // Returning: no exit of its own, so the card that re-mounts with this layoutId animates out of it.
-        exit={returning ? undefined : sheetExit.away}
+        exit={returning ? undefined : flyToYou}
       >
         <motion.div
           className="sheet-body"
@@ -166,156 +316,26 @@ export function CardSheet({
           animate={{ opacity: 1, transition: { delay: 0.12, duration: 0.2 } }}
           exit={{ opacity: 0, transition: { duration: 0.08 } }}
         >
-          <div className="sheet-grab" onPointerDown={(e) => drag.start(e)}>
-            <span className="grabber" />
-            <div className="sheet-top">
-              {step > 0 && current !== "result" ? (
-                <button
-                  className="icon-btn"
-                  onClick={() => go(-1)}
-                  aria-label="Back"
-                >
-                  <ChevronLeft size={22} />
-                </button>
-              ) : (
-                <KindChip kind={card.kind} />
-              )}
-              {current !== "result" && asking.length > 1 && (
-                <div
-                  className="dots"
-                  aria-label={`Question ${step + 1} of ${asking.length}`}
-                >
-                  {asking.map((s, i) => (
-                    <span key={s} className={i <= step ? "on" : ""} />
-                  ))}
-                </div>
-              )}
-              <button className="icon-btn" onClick={onClose} aria-label="Close">
-                <X size={22} />
-              </button>
-            </div>
-          </div>
-
+          <SheetTop
+            step={step}
+            questions={questions}
+            onBack={step > 0 && current !== "result" ? () => go(-1) : undefined}
+            onClose={onClose}
+            onDragStart={(e) => drag.start(e)}
+          />
           <div className="sheet-scroll">
             <AnimatePresence mode="popLayout" custom={dir} initial={false}>
               <motion.div
                 key={current}
-                className="step"
+                className="sheet-step"
                 custom={dir}
                 variants={slide}
                 initial="enter"
                 animate="center"
                 exit="exit"
-                transition={{ type: "spring", stiffness: 500, damping: 42 }}
+                transition={spring.step}
               >
-                {current === "likelihood" && (
-                  <>
-                    <p className="step-topic">{card.topic}</p>
-                    <h2 className="step-q">{card.question}</h2>
-                    <p className="step-ctx">{card.context}</p>
-                    <Choices
-                      options={LIKELIHOOD.map((l) => ({
-                        ...l,
-                        quiet: l.value === null,
-                      }))}
-                      selected={likelihood}
-                      onPick={(v) => {
-                        setLikelihood(v)
-                        pickThenNext()
-                      }}
-                    />
-                  </>
-                )}
-
-                {current === "stance" && (
-                  <>
-                    <p className="step-topic">{card.topic}</p>
-                    <h2 className="step-q">{card.ask}</h2>
-                    <p className="step-ctx">{card.context}</p>
-                    {card.rate !== undefined && <Meter rate={card.rate} />}
-                    <Choices
-                      options={(Object.keys(STANCE) as Stance[]).map((s) => ({
-                        label: STANCE[s],
-                        value: s,
-                        quiet: s === "something_else",
-                      }))}
-                      selected={stance}
-                      onPick={(v) => {
-                        setStance(v)
-                        pickThenNext()
-                      }}
-                    />
-                    <button
-                      className="link"
-                      onClick={() => setWording((w) => !w)}
-                    >
-                      {wording ? "Hide ACAPS’s wording" : "ACAPS’s wording"}
-                    </button>
-                    {wording && (
-                      <div className="wording">
-                        <p>
-                          <strong>{card.acapsTitle}</strong>
-                        </p>
-                        <p>{card.acapsGoal}</p>
-                      </div>
-                    )}
-                  </>
-                )}
-
-                {current === "note" && (
-                  <>
-                    <p className="step-topic">
-                      {card.kind === "open"
-                        ? card.topic
-                        : `${card.topic} · You said: ${answerSummary(card, mine)}`}
-                    </p>
-                    <h2 className="step-q">{noteTitle}</h2>
-                    {card.kind === "open" && (
-                      <p className="step-ctx">{card.context}</p>
-                    )}
-                    <textarea
-                      className="field"
-                      rows={5}
-                      maxLength={280}
-                      value={note}
-                      onChange={(e) => setNote(e.target.value)}
-                      placeholder={
-                        identity === "anonymous"
-                          ? "Only ACAPS sees this. It’s never shown to other experts."
-                          : `${noteRequired ? "" : "Optional. "}Other experts on the panel see this under your name.`
-                      }
-                    />
-                    <button
-                      className="primary"
-                      disabled={noteRequired && !note.trim()}
-                      onClick={submit}
-                    >
-                      {noteRequired || note.trim() ? "Send" : "Skip and send"}
-                    </button>
-                  </>
-                )}
-
-                {current === "result" && (
-                  <>
-                    <p className="step-topic">
-                      {answer ? "Your answer" : "Thanks, that’s in"}
-                    </p>
-                    <h2 className="step-q">Here’s where the panel stands</h2>
-                    <PanelResults card={card} mine={mine} identity={identity} />
-                    {card.impact && answer ? (
-                      <p className="impact-line">{card.impact}</p>
-                    ) : (
-                      <p className="muted small">
-                        ACAPS reviews answers every Monday. If your answer
-                        changes anything, this card turns green on your You
-                        page.
-                      </p>
-                    )}
-                    <button className="primary" onClick={onClose}>
-                      Done
-                    </button>
-                  </>
-                )}
+                {body}
               </motion.div>
             </AnimatePresence>
           </div>

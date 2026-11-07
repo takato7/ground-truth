@@ -1,0 +1,78 @@
+/*
+ * Geometry from the Figma mockup (node 1934:81, frame 2219.52 × 4520.18; matte 1993.00 × 4320.71,
+ * centred on the device body). The screen stays at iPhone 16 size, 393 × 852 points, and the
+ * frame is sized around it.
+ */
+.device {
+  --screen-w: 393px;
+  position: relative;
+  flex: none;
+  width: calc(var(--screen-w) / 0.897944);
+  aspect-ratio: 2219.52 / 4520.18;
+}
+.device-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  user-select: none;
+}
+.phone {
+  position: absolute;
+  left: 5.1028%;
+  top: 2.2064%;
+  width: 89.7944%;
+  height: 95.5872%;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--bg-app);
+  -webkit-mask: url("/device/iphone-matte.svg") center / 100% 100% no-repeat;
+  mask: url("/device/iphone-matte.svg") center / 100% 100% no-repeat;
+}
+
+.status-bar {
+  position: absolute;
+  z-index: 50;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* Clears the island, which spans roughly x 145–248 and y 11–48 on the screen. */
+  padding: 2px 30px 0 44px;
+  color: var(--fg-primary);
+  pointer-events: none;
+}
+.status-time {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.4px;
+}
+.status-icons {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* On a real phone: no frame, the app fills the screen. */
+@media (max-width: 440px) {
+  .device {
+    width: 100%;
+    aspect-ratio: auto;
+    height: 100dvh;
+  }
+  .device-frame,
+  .status-bar {
+    display: none;
+  }
+  .phone {
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    -webkit-mask: none;
+    mask: none;
+  }
+}

@@ -1,0 +1,140 @@
+/* Reset, type styles and the few utilities components share. Tokens live in tokens.css. */
+
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  background: var(--bg-canvas);
+  color: var(--fg-primary);
+  font-family: var(--font-family);
+  -webkit-font-smoothing: antialiased;
+}
+h1,
+h2,
+h3,
+p,
+ul {
+  margin: 0;
+}
+ul {
+  padding: 0;
+  list-style: none;
+}
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border: 0;
+  background: none;
+  padding: 0;
+  text-align: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/*
+ * Type: five roles, each one of Apple's iOS text styles at the default size.
+ * A role fixes size, line height, tracking and weight together; pick by what the text is for.
+ *
+ *   .type-title    Title 2   22/28  semibold   sheet questions, onboarding headings, big numbers
+ *   .type-heading  Headline  17/22  semibold   card questions, section headers, callout titles
+ *   .type-body     Callout   16/21  regular    running text, card context, choices
+ *   .type-meta     Footnote  13/18  regular    supporting lines, dates, authors (secondary)
+ *   .type-label    Caption 1 12/16  semibold   feed dividers, chips, meter values (secondary)
+ *
+ * Two weights only (400, 600). Two text colours: primary, secondary; plus tone (accent ink)
+ * and danger for the rare cases that need them.
+ */
+.type-title {
+  font-size: 22px;
+  line-height: 28px;
+  letter-spacing: -0.26px;
+  font-weight: 600;
+}
+.type-heading {
+  font-size: 17px;
+  line-height: 22px;
+  letter-spacing: -0.43px;
+  font-weight: 600;
+}
+.type-body {
+  font-size: 16px;
+  line-height: 21px;
+  letter-spacing: -0.31px;
+  font-weight: 400;
+}
+.type-meta {
+  font-size: 13px;
+  line-height: 18px;
+  letter-spacing: -0.08px;
+  font-weight: 400;
+  color: var(--fg-secondary);
+}
+.type-label {
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0;
+  font-weight: 600;
+  color: var(--fg-secondary);
+}
+
+.fg-primary {
+  color: var(--fg-primary);
+}
+.fg-secondary {
+  color: var(--fg-secondary);
+}
+.fg-tone {
+  color: var(--tone-fg);
+}
+.fg-danger {
+  color: var(--fg-danger);
+}
+
+/* Tones: set on any element; children read --tone-bg / --tone-fg. */
+.tone-neutral {
+  --tone-bg: var(--tone-neutral-bg);
+  --tone-fg: var(--tone-neutral-fg);
+}
+.tone-brand {
+  --tone-bg: var(--tone-brand-bg);
+  --tone-fg: var(--tone-brand-fg);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+}
+.row {
+  display: flex;
+  align-items: center;
+}
+.gap-1 {
+  gap: var(--space-1);
+}
+.gap-2 {
+  gap: var(--space-2);
+}
+.gap-3 {
+  gap: var(--space-3);
+}
+.gap-4 {
+  gap: var(--space-4);
+}
+.clamp-5 {
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}

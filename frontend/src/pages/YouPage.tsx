@@ -1,13 +1,25 @@
-import { Award, BadgeCheck, EyeOff, UserRound } from "lucide-react"
+import { TrendingUp, UserRound } from "lucide-react"
 import { motion } from "motion/react"
-import { FeedCard } from "../components/FeedCard"
-import { PageHeader, SectionTitle } from "../components/ui"
+import { IDENTITY } from "../components/kind"
+import { QuestionCard } from "../components/QuestionCard"
 import { PANEL } from "../data/cards"
 import { useStore } from "../data/store"
+import {
+  Avatar,
+  Callout,
+  CardList,
+  Divider,
+  Page,
+  SectionHeader,
+  Stat,
+  Text,
+  fadeIn,
+} from "../ui"
 import { CardSlot, type OpenSheet } from "./FeedPage"
+import "./YouPage.css"
 
-const roundLabel = (iso: string) =>
-  new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short" })
+const dayLabel = (iso: string) =>
+  new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "long" })
 
 /** The expert's own history: every answer, green where it moved ACAPS. */
 export function YouPage({
@@ -19,97 +31,71 @@ export function YouPage({
   activeHeight?: number
   onOpen: OpenSheet
 }) {
-  const { state, dispatch, answered, impacts } = useStore()
+  const { state, answered, impacts } = useStore()
   const known = state.identity === "known"
 
-  return (
-    <div className="page-inner">
-      <PageHeader title="You" />
+  // Answers arrive newest first; a divider starts each new day.
+  const items = answered.flatMap(({ card, answer }, i) => {
+    const day = dayLabel(answer.at)
+    const newDay = i === 0 || dayLabel(answered[i - 1].answer.at) !== day
+    return [
+      ...(newDay ? [<Divider key={`day-${day}`}>{day}</Divider>] : []),
+      <motion.div key={card.id} layout {...fadeIn}>
+        <CardSlot active={activeId === card.id} height={activeHeight}>
+          <QuestionCard
+            card={card}
+            answer={answer}
+            layoutId={`you-${card.id}`}
+            onOpen={(el) => onOpen(card, "you", el)}
+          />
+        </CardSlot>
+      </motion.div>,
+    ]
+  })
 
-      <div className="profile">
-        <span className="avatar">
-          {known ? "MO" : <UserRound size={22} aria-hidden />}
-        </span>
-        <div>
-          <strong>{known ? "Mira Okonde" : "Anonymous expert"}</strong>
-          <span>{PANEL} panel</span>
+  return (
+    <Page>
+      {/* Profile header: no card, just the avatar with name and panel centred below it. */}
+      <header className="you-profile">
+        <Avatar size="lg">
+          {known ? "MO" : <UserRound size={36} aria-hidden />}
+        </Avatar>
+        <div className="stack gap-1">
+          <Text as="h1" role="title">
+            {known ? "Mira Okonde" : "Anonymous expert"}
+          </Text>
+          <Text role="meta">
+            {PANEL} panel · {IDENTITY[state.identity].label}
+          </Text>
         </div>
-        <button
-          className="identity-toggle"
-          onClick={() =>
-            dispatch({
-              type: "identity",
-              identity: known ? "anonymous" : "known",
-            })
-          }
-        >
-          {known ? (
-            <BadgeCheck size={16} aria-hidden />
-          ) : (
-            <EyeOff size={16} aria-hidden />
-          )}
-          {known ? "Known to ACAPS" : "Anonymous"}
-        </button>
-      </div>
+      </header>
 
       {/* Shown only when it's true. A weak record gets no card rather than a discouraging one. */}
       {state.goodStanding && (
-        <motion.div
-          className="standing"
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <Award size={24} aria-hidden />
-          <div>
-            <strong>Your estimates carry weight</strong>
-            <p>
-              Your recent calls on eastern Chad have been close to what
-              happened. ACAPS gives them more weight.
-            </p>
-          </div>
+        <motion.div {...fadeIn}>
+          <Callout tone="brand" icon={TrendingUp} title="Every round answered">
+            You’ve answered every round since joining. Your accuracy record
+            starts once your first forecasts resolve, six months after you made
+            them.
+          </Callout>
         </motion.div>
       )}
 
-      <div className="you-stats">
-        <div>
-          <strong>{answered.length}</strong>
-          <span>answers</span>
-        </div>
+      <div className="row gap-2 you-stats">
+        <Stat value={answered.length} label="answers" />
         {impacts > 0 && (
-          <div className="good">
-            <strong>{impacts}</strong>
-            <span>changed ACAPS’s view</span>
-          </div>
+          <Stat value={impacts} label="informed ACAPS" tone="brand" />
         )}
       </div>
 
-      <SectionTitle>Your answers</SectionTitle>
+      <SectionHeader>History</SectionHeader>
       {answered.length === 0 ? (
-        <p className="muted empty">
-          Answers you give show up here, with what the panel said.
-        </p>
+        <Text color="secondary" className="you-empty">
+          Your answers and the panel’s responses appear here.
+        </Text>
       ) : (
-        <div className="card-list">
-          {answered.map(({ card, answer }) => (
-            <motion.div
-              key={card.id}
-              layout
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              <p className="round-label">{roundLabel(answer.at)}</p>
-              <CardSlot active={activeId === card.id} height={activeHeight}>
-                <FeedCard
-                  card={card}
-                  answer={answer}
-                  layoutId={`you-${card.id}`}
-                  onOpen={(el) => onOpen(card, "you", el)}
-                />
-              </CardSlot>
-            </motion.div>
-          ))}
-        </div>
+        <CardList>{items}</CardList>
       )}
-    </div>
+    </Page>
   )
 }

@@ -4,12 +4,12 @@ import type { Answer, State } from "./types"
 
 const at = (date: string) => `${date}T09:30:00.000Z`
 
-/** Answers from earlier rounds: an engaged expert whose input moved ACAPS twice. */
+/** Answers from last month's round: an engaged expert whose input informed ACAPS twice. */
 const PAST: Record<string, Answer> = {
-  "w36-T0619": {
-    cardId: "w36-T0619",
-    at: at("2026-09-08"),
-    stance: "not_as_far",
+  "w41-T0619": {
+    cardId: "w41-T0619",
+    at: at("2026-10-06"),
+    stance: "about_right",
     note: "No movement around Amdjarass.",
   },
   "w41-risk": {
@@ -72,7 +72,7 @@ const base: State = {
 export const SCENARIOS = {
   invite: {
     label: "1 · New invite (onboarding)",
-    state: { ...base, onboarding: "invite" },
+    state: { ...base, onboarding: "welcome" },
   },
   first: {
     label: "2 · First week, nothing answered",
@@ -98,7 +98,7 @@ export const SCENARIOS = {
     label: "6 · Lapsed (News locked)",
     state: {
       ...base,
-      answers: { "w36-T0619": PAST["w36-T0619"] },
+      answers: { "w41-T0619": PAST["w41-T0619"] },
       lapsed: true,
     },
   },

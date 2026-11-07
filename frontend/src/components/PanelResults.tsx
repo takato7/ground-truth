@@ -1,37 +1,32 @@
 import { EyeOff, Lock } from "lucide-react"
-import { LIKELIHOOD, STANCE_SHORT, likelihoodLabel } from "../data/cards"
+import { LIKELIHOOD, STANCE_SHORT } from "../data/cards"
 import { panelFor } from "../data/store"
 import type { Answer, Card, Identity, Stance } from "../data/types"
+import { BarList, Callout, Quote, Text, type BarRow } from "../ui"
 
-function Bars({
-  rows,
-}: {
-  rows: { label: string; n: number; mine: boolean; tag?: string }[]
-}) {
-  const max = Math.max(1, ...rows.map((r) => r.n))
-  return (
-    <ul className="bars">
-      {rows.map((r) => (
-        <li key={r.label} className={r.mine ? "mine" : ""}>
-          <span className="bar-label">
-            {r.label}
-            {r.mine && <em>you</em>}
-            {r.tag && <em className="tag">{r.tag}</em>}
-          </span>
-          <span className="bar-track">
-            <span
-              className="bar-fill"
-              style={{ width: `${(r.n / max) * 100}%` }}
-            />
-          </span>
-          <span className="bar-n">{r.n}</span>
-        </li>
-      ))}
-    </ul>
-  )
+function rowsFor(
+  card: Card,
+  mine: Answer,
+  all: ReturnType<typeof panelFor>["all"],
+): BarRow[] | null {
+  if (card.kind === "risk") {
+    return LIKELIHOOD.filter((l) => l.value !== null).map((l) => ({
+      label: l.label,
+      count: all.filter((p) => p.likelihood === l.value).length,
+      mine: mine.likelihood === l.value,
+    }))
+  }
+  if (card.kind === "trigger") {
+    return (Object.keys(STANCE_SHORT) as Stance[]).map((s) => ({
+      label: STANCE_SHORT[s],
+      count: all.filter((p) => p.stance === s).length,
+      mine: mine.stance === s,
+    }))
+  }
+  return null
 }
 
-/** What the panel said, shown only after the expert has answered. */
+/** What the panel said. Only ever rendered after the expert has answered. */
 export function PanelResults({
   card,
   mine,
@@ -45,66 +40,37 @@ export function PanelResults({
 
   if (panel.hidden) {
     return (
-      <div className="results-hidden">
-        <Lock size={18} aria-hidden />
-        <p>
-          Only {panel.count} {panel.count === 1 ? "answer" : "answers"} so far.
-          Results show once three experts have answered, so nobody can be picked
-          out.
-        </p>
-      </div>
+      <Callout icon={Lock} well>
+        Only {panel.count} {panel.count === 1 ? "answer" : "answers"} so far.
+        Results show once three experts have answered, so nobody can be picked
+        out.
+      </Callout>
     )
   }
 
-  let bars = null
-  if (card.kind === "risk") {
-    bars = (
-      <Bars
-        rows={LIKELIHOOD.filter((l) => l.value !== null).map((l) => ({
-          label: l.label,
-          n: panel.all.filter((p) => p.likelihood === l.value).length,
-          mine: mine.likelihood === l.value,
-          tag: card.acapsLikelihood === l.value ? "ACAPS" : undefined,
-        }))}
-      />
-    )
-  } else if (card.kind === "trigger") {
-    bars = (
-      <Bars
-        rows={(Object.keys(STANCE_SHORT) as Stance[]).map((s) => ({
-          label: STANCE_SHORT[s],
-          n: panel.all.filter((p) => p.stance === s).length,
-          mine: mine.stance === s,
-        }))}
-      />
-    )
-  }
-
+  const rows = rowsFor(card, mine, panel.all)
   return (
-    <div className="results">
-      <p className="results-count">{panel.count} experts answered</p>
-      {bars}
-      {card.kind === "risk" && card.acapsLikelihood !== undefined && (
-        <p className="muted small">
-          ACAPS currently rates this as{" "}
-          {likelihoodLabel(card.acapsLikelihood).toLowerCase()}.
-        </p>
+    <div className="stack gap-3">
+      <Text role="meta">{panel.count} experts answered</Text>
+      {rows && <BarList rows={rows} well />}
+      {card.kind === "risk" && card.acapsProbability && (
+        <Text role="meta">
+          ACAPS rates this risk’s probability as {card.acapsProbability}, on its
+          own scale and time frame.
+        </Text>
       )}
       {panel.notes.length > 0 && (
-        <ul className="notes">
+        <ul className="stack gap-2">
           {panel.notes.map((n, i) => (
-            <li key={i}>
-              <p>{n.note}</p>
-              <span>{n.name}</span>
-            </li>
+            <Quote key={i} text={n.note} author={n.name} well />
           ))}
         </ul>
       )}
       {panel.anonymous > 0 && (
-        <p className="muted small anon-line">
+        <Text role="meta" className="row gap-1">
           <EyeOff size={14} aria-hidden /> {panel.anonymous} anonymous{" "}
           {panel.anonymous === 1 ? "answer" : "answers"} counted, never quoted.
-        </p>
+        </Text>
       )}
     </div>
   )

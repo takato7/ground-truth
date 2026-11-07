@@ -1,0 +1,36 @@
+.risk-level {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.risk-mark {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  flex: none;
+}
+/* ACAPS map colours: crimson high, red medium, rose low. */
+.risk-high {
+  background: #c4083f;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+.risk-medium {
+  background: #e5485f;
+  border-radius: var(--radius-pill);
+}
+.risk-low {
+  background: #dfa3a6;
+}
+.impact-scale {
+  display: inline-flex;
+  gap: 4px;
+}
+.impact-scale span {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  background: var(--track);
+}
+.impact-scale span.on {
+  background: var(--acaps-teal);
+}

@@ -1,0 +1,57 @@
+/* The demo frame: a phone centred on a desk; the dev bar sits out of the way, bottom left. */
+.shell {
+  min-height: 100vh;
+  display: flex;
+  padding: var(--space-6) var(--space-4);
+}
+/* margin: auto centres, but on a short screen it starts at the top and scrolls instead of clipping. */
+.shell > .device {
+  margin: auto;
+}
+@media (max-width: 440px) {
+  .shell {
+    padding: 0;
+  }
+}
+
+.app-column {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.app-column .pager {
+  flex: 1;
+  min-height: 0;
+}
+
+/* Dev-only controls. Always dark so it reads as tooling, not product. */
+.devbar {
+  position: fixed;
+  z-index: 100;
+  left: var(--space-4);
+  bottom: var(--space-4);
+  opacity: 0.75;
+  transition: opacity var(--duration-fast);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-2);
+  padding: 6px;
+  border-radius: 14px;
+  background: var(--gray-10);
+  color: var(--gray-1);
+  font-size: 13px;
+}
+.devbar select,
+.devbar button {
+  padding: 6px 10px;
+  border-radius: 9px;
+  border: 0;
+  background: var(--gray-8);
+  color: var(--gray-1);
+  font: inherit;
+}
+.devbar:hover,
+.devbar:focus-within {
+  opacity: 1;
+}

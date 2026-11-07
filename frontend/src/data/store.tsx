@@ -11,7 +11,14 @@ import {
 } from "react"
 import { CARDS, CURRENT_ROUND, MIN_SHOWN, cardById } from "./cards"
 import { DEFAULT_SCENARIO, SCENARIOS, type ScenarioId } from "./scenarios"
-import type { Answer, Card, Identity, PeerAnswer, State } from "./types"
+import type {
+  Answer,
+  Card,
+  Identity,
+  OnboardingStep,
+  PeerAnswer,
+  State,
+} from "./types"
 
 const KEY = "groundline-proto-v1"
 
@@ -23,6 +30,7 @@ interface Saved {
 type Action =
   | { type: "scenario"; id: ScenarioId }
   | { type: "invite" }
+  | { type: "onboarding"; step: OnboardingStep }
   | { type: "identity"; identity: Identity; finish?: boolean }
   | { type: "answer"; answer: Omit<Answer, "at"> }
   | { type: "seen" }
@@ -32,7 +40,15 @@ function load(): Saved {
     const raw = localStorage.getItem(KEY)
     if (raw) {
       const saved = JSON.parse(raw) as Saved
-      if (saved.scenario in SCENARIOS && saved.state) return saved
+      if (saved.scenario in SCENARIOS && saved.state) {
+        // Drop answers to cards that no longer exist (a card was renamed since this was saved).
+        const answers = Object.fromEntries(
+          Object.entries(saved.state.answers ?? {}).filter(([id]) =>
+            CARDS.some((c) => c.id === id),
+          ),
+        )
+        return { ...saved, state: { ...saved.state, answers } }
+      }
     }
   } catch {
     // Private mode or bad JSON: start fresh.
@@ -50,6 +66,8 @@ function reduce(s: Saved, a: Action): Saved {
       return { scenario: a.id, state: SCENARIOS[a.id].state }
     case "invite":
       return { ...s, state: { ...st, onboarding: "identity" } }
+    case "onboarding":
+      return { ...s, state: { ...st, onboarding: a.step } }
     case "identity":
       return {
         ...s,
@@ -132,9 +150,9 @@ export function panelFor(card: Card, mine: Answer, identity: Identity) {
     count: all.length,
     hidden: all.length < MIN_SHOWN,
     /** Notes from named experts only; anonymous answers count but are never quoted. */
-    notes: all.filter((p) => p.name && p.note) as Required<
-      Pick<PeerAnswer, "name" | "note">
-    >[],
+    notes: all.flatMap((p) =>
+      p.name && p.note ? [{ name: p.name, note: p.note }] : [],
+    ),
     anonymous: all.filter((p) => !p.name).length,
   }
 }

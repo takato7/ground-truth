@@ -1,0 +1,28 @@
+.qcard {
+  text-align: left;
+}
+.qcard-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-5);
+}
+.qcard-head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+.qcard-head > :first-child {
+  flex: 1;
+}
+.qcard-check {
+  flex: none;
+  color: var(--tone-fg);
+}
+.qcard .meter {
+  margin-top: var(--space-1);
+}
+/* Keeps a card's place in the list while it's open as a sheet. */
+.card-ghost {
+  border-radius: var(--radius-xl);
+}
