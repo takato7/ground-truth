@@ -4,7 +4,7 @@ import type { components } from "./api/schema.gen"
 import { App } from "./App"
 
 const HTTP_OK = 200
-const HTTP_INTERNAL_ERROR = 500
+const HTTP_BAD_GATEWAY = 502
 const HTTP_SERVICE_UNAVAILABLE = 503
 const SCHEMA_OBJECTS = 7
 
@@ -61,7 +61,7 @@ test.each([
   ["a network failure", new TypeError("Failed to fetch")],
   [
     "the proxy's error when the backend is down",
-    new Response("", { status: HTTP_INTERNAL_ERROR }),
+    new Response("", { status: HTTP_BAD_GATEWAY }),
   ],
   [
     "a 200 that is not JSON",
