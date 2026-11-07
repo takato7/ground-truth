@@ -5,7 +5,17 @@ import { KIND, KIND_ORDER } from "../components/kind"
 import { QuestionCard } from "../components/QuestionCard"
 import { useStore } from "../data/store"
 import type { Card } from "../data/types"
-import { Button, Callout, CardList, Divider, Page, Text, spring } from "../ui"
+import {
+  Button,
+  Callout,
+  CardList,
+  Divider,
+  Illustration,
+  Page,
+  Text,
+  spring,
+} from "../ui"
+import "./FeedPage.css"
 
 export type OpenSheet = (
   card: Card,
@@ -80,11 +90,36 @@ export function FeedPage({
 
   return (
     <Page>
-      <Text role="meta">
-        {left
-          ? `${left} ${left === 1 ? "question" : "questions"} this week · about ${left < 3 ? "a minute" : "two minutes"}`
-          : "Nothing left this week"}
-      </Text>
+      <AnimatePresence initial={false} mode="popLayout">
+        {left ? (
+          <motion.header
+            key="intro"
+            className="feed-intro"
+            layout="position"
+            exit={{ opacity: 0, transition: { duration: 0.15 } }}
+          >
+            <Illustration name="lightbulb" />
+            <Text as="h1" role="title">
+              We have a few questions about eastern Chad
+            </Text>
+            <Text color="secondary">
+              Answer the ones you know about and skip the rest. Your answers go
+              straight to ACAPS’s analysts.
+            </Text>
+            <Text role="meta">
+              {`${left} ${left === 1 ? "question" : "questions"} this week · about ${left < 3 ? "a minute" : "two minutes"}`}
+            </Text>
+          </motion.header>
+        ) : (
+          <motion.div
+            key="none"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <Text role="meta">Nothing left this week</Text>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <CardList>
         <AnimatePresence initial={false} mode="popLayout">

@@ -1,0 +1,13 @@
+/* Centred intro above the cards: what the panel is being asked, and how long it takes. */
+.feed-intro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-2) var(--space-2);
+  text-align: center;
+  text-wrap: balance;
+}
+.feed-intro .illo {
+  margin-bottom: var(--space-2);
+}
