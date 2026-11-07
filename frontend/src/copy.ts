@@ -56,10 +56,14 @@ export const ANSWER_SHORT: Record<Stance, string> = {
   missing: "something else",
 }
 
-/** Optional forecast, stored as 0–100 in steps of 5. null = not sure. */
+/** Optional forecast, stored as the category midpoint (10/30/50/70/90). null = not sure. */
+// Five categories, one per step of ACAPS's own probability scale (Very low … Very high),
+// so expert forecasts and ACAPS ratings can be scored on the same categories.
 export const LIKELIHOOD: { label: string; value: number | null }[] = [
-  { label: "Unlikely", value: 20 },
+  { label: "Very unlikely", value: 10 },
+  { label: "Unlikely", value: 30 },
   { label: "Could go either way", value: 50 },
-  { label: "Likely", value: 80 },
+  { label: "Likely", value: 70 },
+  { label: "Very likely", value: 90 },
   { label: "Not sure", value: null },
 ]
