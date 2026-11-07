@@ -13,6 +13,20 @@ Reusable lessons and harness issues, triaged by `/retro`. Add new entries below 
 
 ---
 
+### An interrupted command may have partly run
+
+- Source: issue #2, AC2 port check. A tool call was reported as rejected, yet its script had left a container holding 8041. The next check measured that container instead of the intended listener, until `lsof` and `docker ps` showed it.
+- What happened: the helper listener died on bind, and the failure looked like the expected result.
+- Generalised rule: after an interrupted command, look for what it started. In a check that sets up a precondition, confirm the holder is your own process before reading the result.
+- Suggested target: `.claude/rules/workflow.md`. Do not change the harness during the hackathon.
+
+### A user's waiver of an acceptance criterion belongs on the issue
+
+- Source: PR #5 review. The instruction to verify one case was in the plan only, so the reviewer rightly treated the criterion as standing.
+- What happened: a must-fix was raised that recording the decision on the issue would have avoided.
+- Generalised rule: when the user narrows or waives a criterion, record it on the issue when it happens, not only in the plan.
+- Suggested target: implement skill, or plan-tracking skill. Do not change the harness during the hackathon.
+
 ### sandbox.sh's empty HOME hides the docker compose plugin
 
 - Source: issue #2, running `make up` in `.claude/scripts/sandbox.sh` to test a missing env file.
