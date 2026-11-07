@@ -10,12 +10,11 @@ RENDER_SNIPPET = (
     "import sys; from scripts.export_openapi import render_openapi; "
     "sys.stdout.write(render_openapi())"
 )
-CONFIG_VARS = {"DATABASE_URL", "BACKEND_PORT", "FRONTEND_PORT"}
 
 
 def _render_in_fresh_process(hash_seed: str) -> str:
-    env = {key: value for key, value in os.environ.items() if key not in CONFIG_VARS}
-    env["PYTHONHASHSEED"] = hash_seed
+    # An allowlist, so a variable the app starts requiring at import cannot pass unnoticed.
+    env = {"PATH": os.environ["PATH"], "PYTHONHASHSEED": hash_seed}
     result = subprocess.run(
         [sys.executable, "-c", RENDER_SNIPPET],
         cwd=BACKEND_DIR,
