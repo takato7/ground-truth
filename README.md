@@ -1,214 +1,82 @@
-# Ground Truth: A Trusted Expert Loop for Humanitarian Risk Analysis
+# Groundline
 
-**Hackathon for Good #8** | 6-8 November 2026 | The Hague
+**Hackathon for Good #8 · ACAPS "Ground Truth" challenge** · The Hague, 6–8 November 2026
 
-**Challenge owners:** Lars Peters and Alexander Harper, [ACAPS](https://www.acaps.org/) — an independent humanitarian analysis organisation monitoring 100+ crises worldwide.
+A lightweight app that keeps ACAPS analysts and the experts on the ground in short, regular loops. Experts answer a few focused questions in under a minute, and get ACAPS's latest analysis and the impact of their answers back straight away.
 
----
+## The problem, as we read it
 
-## The Challenge
+ACAPS and its experts both want good data, but their incentives don't line up. Analysts look at the big picture from outside the room; experts are busy with day-to-day decisions. Today their knowledge reaches ACAPS through one-off conversations and email chains, then disappears.
 
-ACAPS analysts build the [Risk List](https://www.acaps.org/en/thematics/all-topics/risk-list): an overview of risks that could trigger a new humanitarian crisis or sharply worsen an existing one. But today, the knowledge of the experts closest to these crises — the people who sense a shift before it shows up in a report — stays locked in informal conversations and disappears.
+Groundline turns that into a small, frictionless exchange: **experts give a minute of ground truth, and get back ACAPS data that helps them plan.** Shorter loops mean ACAPS's picture stays closer to what's happening, and experts see a clearer view of what's coming.
 
-**Your challenge:** build a system that lets a trusted, moderated network of humanitarian experts challenge, enrich and forecast ACAPS risk analyses, while controlling their own anonymity and contributing in just a few minutes.
+## How it works
 
-> *Example question the solution should handle:*
-> *"What are the three biggest risks in Chad that might worsen humanitarian outcomes in the next six months?"*
+The demo is built around the brief's live risk, **R1043: Sudan conflict spillover into eastern Chad**, using the real Risk Radar export.
 
-### Two Directions
+**Three pages**
 
-| Direction | What it means |
-|-----------|---------------|
-| **Ground Truthing** | Experts react to ACAPS risk analyses — do they agree? What is missing? Think Delphi-style: independent responses, anonymised group summary, iterative refinement. |
-| **Forecasting** | Experts estimate how likely specific events are within six months. Track records emerge over time, surfacing "super estimators". |
+- **Feed**: this week's questions. Each card stands on its own, so an expert answers only what they know about. They can target where ACAPS might be wrong, instead of filling in a whole survey.
+- **News**: ACAPS's latest updates for the region (R1043, R1066, R1055), taken verbatim from the export.
+- **You**: the expert's answer history, and what changed at ACAPS because of it.
 
-Teams can work on one or both. The strongest solutions show how both feed back into ACAPS analysis.
+**Question types**, all generated from ACAPS's own fields:
 
-Read the [full challenge brief](docs/challenge-brief.md) for complete details, personas, and criteria.
+- *Risk*: "Will this get clearly worse in six months?" on ACAPS's five-step probability scale. This makes the answers forecasts that can be scored once the risk resolves.
+- *Trigger*: "ACAPS rates this trigger X% complete. Does that match what you see?" (about right / further / not as far / something else). This is ground truthing against the triggers analysts already track.
+- *Open*: "What is ACAPS not watching?"
 
----
+**The loop**
 
-## Quick Start
+1. **Answer first.** Peer answers stay hidden until you've answered, so you aren't anchored by the group (Delphi-style).
+2. **See the panel.** After answering you see how the 5–10 experts on the panel split, so you can tell whether others see the same thing.
+3. **See the impact.** The You page shows when a round changed ACAPS's analysis.
+4. **Stay current.** Answering keeps the News page unlocked. Experts who skip a round lose access until they answer again. They get value for their input, not engagement for its own sake.
 
-```bash
-# 1. Clone the repo
-git clone https://github.com/Hackathon-for-Good-The-Hague/HFG8-ACAPS-Ground-Truth.git
-cd HFG8-ACAPS-Ground-Truth
+**Anonymity** (expert-controlled, can be changed at any time)
 
-# 2. Create a virtual environment (recommended)
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+- **Known to ACAPS**: named to peers on the panel.
+- **Anonymous**: counted in panel results but never named or quoted, and their notes never appear for other experts.
+- Panel results stay hidden until at least 3 people have answered, so a small panel can't be used to work out who said what.
+- Nothing is attributed to an individual publicly.
 
-# 3. Install dependencies
-pip install -r requirements.txt
+## Try it
 
-# 4. Explore the data
-jupyter notebook notebooks/data-exploration.ipynb
-```
-
-Or load the data directly:
-
-```python
-import pandas as pd
-
-df = pd.read_csv("data/risk-radar-export.csv")
-print(f"{len(df)} risks across {df['Country'].nunique()} countries")
-print(df["Risk Level"].value_counts())
-```
-
----
-
-## Running Groundline
-
-Groundline is the closed expert forum built on this template. The frontend and the API are served from one origin: Vite proxies `/api` to the backend.
-
-### Prerequisites
-
-- Docker with Compose v2, and `make`.
-- For local dev and `make check`: [uv](https://docs.astral.sh/uv/) (Python 3.12) and Node 24. Run `make install` once.
-
-### With Docker
+Requires Node 24.
 
 ```bash
-cp .env.example .env   # all three values are required
-make up
+cd frontend
+npm install
+npm run dev
 ```
 
-Open <http://localhost:5181>. `make down` stops the stack; it reads the same required values, so restore `.env` first if you removed a value or the file.
+The demo bar in the bottom-left corner jumps between seven scenarios: onboarding a new invite, first week, regular expert, halfway through the week, all caught up, lapsed (News locked), and anonymous expert. Any invite code works. State is saved in `localStorage`; **Restart** resets the current scenario.
 
-| Setting | In `.env.example` | Used for |
-|---------|-------------------|----------|
-| `BACKEND_PORT` | `8041` | Backend port, the same inside and outside the container |
-| `FRONTEND_PORT` | `5181` | Frontend port, the same inside and outside the container |
-| `DATABASE_URL` | `sqlite:////data/ground-truth.db` | SQLite file on the `db-data` volume |
+Checks: `npm run lint && npm run typecheck && npm test`.
 
-A missing or empty value, or a missing `.env` file, stops `make up` with an error naming the value. No port is ever chosen for you.
+## Built with the data
 
-**Port conflicts.** If another Docker container holds a configured port, `make up` fails with Docker's error naming the port (`Bind for 0.0.0.0:8041 failed: port is already allocated`). The other service may stay up; `make down` clears it. A non-Docker process holding the port may not be detected: on Docker Desktop for macOS, `make up` succeeded with a host listener on 8041. If the app does not answer as expected, check with `lsof -nP -iTCP:8041 -iTCP:5181 -sTCP:LISTEN`.
+- `frontend/scripts/build_reports.py` turns `data/risk-radar-export.csv` into `frontend/src/mocks/risk-radar-active.json`: every active risk, with ACAPS's text kept verbatim and inline citations moved into source lists.
+- Trigger completion rates, probability ratings and risk titles on the cards come straight from the R1043 record. Only the peer experts and their answers are made up (no real personal data).
 
-### Without Docker
+## Not built yet (pilot roadmap)
 
-```bash
-# Backend. DATABASE_URL is required; the file below is gitignored.
-cd backend && DATABASE_URL=sqlite:///./local.db uv run uvicorn app.main:app --reload --port 8041
+- **Track record**: Brier-score the risk forecasts as they resolve, to learn whose judgement to weight more in which context. The export's resolved risks can be used to test this before any expert joins.
+- **Notifications** that follow a healthy rhythm: more rounds for active experts, a gentle nudge for those who've lapsed.
+- **Translation** of the whole app and its notifications into each expert's working language (French first).
+- **Invite links** that let a new expert answer one question before signing up, to show how quick it is.
+- **Moderator view** for ACAPS, with AI-assisted synthesis of the panel's input behind the scenes.
 
-# Frontend, in a second terminal. API_PROXY_TARGET is required by the dev server.
-cd frontend && API_PROXY_TARGET=http://localhost:8041 npm run dev -- --port 5181 --strictPort
-```
+Open questions we'd test with experts: how to word questions so they're easy to answer, and whether a dashboard of cards or a single guided questionnaire works better.
 
-### Where things live
-
-- **SQLite file:** on the `db-data` volume at `/data` under Docker; at the path in `DATABASE_URL` locally (`backend/local.db` above).
-- **Exported Figma screens:** `frontend/src/screens/exported/`, with mock data in `frontend/src/mocks/`.
-- **OpenAPI document:** `/api/openapi.json`.
-
-### Checks
-
-`make check` runs all quality gates and needs neither Docker nor `.env`. It does need the local `.claude/` harness; without it, use `make check-frontend`.
-
----
-
-## What's in the Data
-
-The ACAPS Risk Radar export contains **139 humanitarian risks** across **57 countries**, with the full lifecycle of each risk:
-
-| What | Fields |
-|------|--------|
-| **The risk** | Title, type, country, triggers |
-| **ACAPS rating** | Probability (5-point), impact (1-5), risk level, rationale |
-| **What happened** | Status (active / materialised / not materialised), materialisation description |
-
-Among resolved risks, ~**84% of "High" risks materialised** — higher ratings predict materialisation significantly better. Run the [starter notebook](notebooks/data-exploration.ipynb) to see exact rates by level.
-
-**Demo risk:** [R1043](docs/challenge-brief.md#data) — *"Escalating cross-border insecurity linked to the Sudan conflict increases protection risks and humanitarian needs in eastern Chad"* (active, high risk, >500K people exposed).
-
-See the [data dictionary](docs/data-dictionary.md) for every field documented.
-
----
-
-## Repository Structure
+## Repository
 
 ```
-HFG8-ACAPS-Ground-Truth/
-├── README.md                    ← You are here
-├── .gitignore
-├── LICENSE                      ← MIT
-├── CODE_OF_CONDUCT.md
-├── CLAUDE.md                    ← Context for AI coding assistants
-├── requirements.txt             ← Python dependencies
-│
-├── docs/
-│   ├── challenge-brief.md       ← Full challenge description
-│   ├── risk-methodology.md      ← How ACAPS identifies and rates risks
-│   ├── data-dictionary.md       ← Every column in the dataset explained
-│   ├── evaluation-criteria.md   ← Judging criteria and deliverables
-│   └── resources.md             ← Links, APIs, and inspiration
-│
-├── data/
-│   ├── README.md                ← Data overview and quick start
-│   ├── risk-radar-export.csv    ← Clean CSV (recommended)
-│   └── risk-radar-export.xlsx   ← Original Excel export
-│
-├── references/
-│   ├── acaps-risk-methodology.pdf
-│   └── acaps-risk-methodology-infographic.png
-│
-└── notebooks/
-    └── data-exploration.ipynb   ← Guided data walkthrough
+frontend/          React + TypeScript + Vite prototype (runs without a backend)
+data/              ACAPS Risk Radar export (organiser-provided)
+docs/              Challenge brief, evaluation criteria, data dictionary, methodology
+notebooks/         Organiser's data-exploration notebook (pip install -r requirements.txt)
+references/        ACAPS risk methodology
 ```
 
----
-
-## Key Constraints
-
-- **Anonymity is non-negotiable.** Each expert controls their level: known to ACAPS, pseudonymous to peers, or fully anonymous. Contributions are always anonymous to the public.
-- **Respect experts' time.** A contribution should take minutes, not hours.
-- **Small trusted groups.** 5-10 experts per country/context, moderated by ACAPS.
-- **No real personal data.** Use synthetic users during the hackathon.
-
----
-
-## What You Deliver
-
-1. A **working prototype or demo**
-2. A **3-minute pitch** for the jury
-3. A **repository link** with a description of what you built, how it works, and why
-
----
-
-## Follow-Up
-
-The **2-3 most promising solutions** will be piloted with real ACAPS experts starting December 2026. Solutions that make joining and staying involved easy have a clear head start.
-
----
-
-## ACAPS Risk Methodology
-
-<p align="center">
-  <img src="references/acaps-risk-methodology-infographic.png" alt="ACAPS Risk Methodology" width="700">
-</p>
-
-Read the [full methodology explainer](docs/risk-methodology.md).
-
----
-
-## Resources
-
-- [Full challenge brief](docs/challenge-brief.md)
-- [Data dictionary](docs/data-dictionary.md)
-- [Evaluation criteria](docs/evaluation-criteria.md)
-- [Resources and inspiration](docs/resources.md)
-- [ACAPS Risk List](https://www.acaps.org/en/thematics/all-topics/risk-list) (live data)
-- [ACAPS API](https://api.acaps.org) (free account, token auth)
-
-**On site:** Alexander Harper (Alex) from ACAPS will be at the hackathon for questions and feedback.
-
-**Hackathon questions:** [info@hackathonforgood.org](mailto:info@hackathonforgood.org)
-
----
-
-## License
-
-This project is licensed under the MIT License — see [LICENSE](LICENSE).
-
-ACAPS data is used under [ACAPS' terms of use](https://www.acaps.org/en/about/terms-of-use).
+MIT licensed. ACAPS data is used under [ACAPS' terms of use](https://www.acaps.org/en/about/terms-of-use).
