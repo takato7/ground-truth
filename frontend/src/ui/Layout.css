@@ -1,0 +1,57 @@
+.page-body {
+  position: relative;
+  min-height: 100%;
+  /* The title bar sits above the pages; the bottom clears the floating tab bar. */
+  padding: var(--space-4) var(--gutter) 130px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.section-header {
+  margin-top: var(--space-4);
+}
+.divider {
+  margin: var(--space-3) 0 calc(var(--space-1) * -1) var(--space-1);
+}
+.divider:first-child {
+  margin-top: 0;
+}
+.card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: var(--radius-pill);
+  background: var(--bg-well);
+  color: var(--fg-primary);
+}
+.avatar-lg {
+  width: 88px;
+  height: 88px;
+  background: var(--bg-surface);
+  box-shadow: inset 0 0 0 1px var(--border-interior);
+}
+
+.logo {
+  display: inline-flex;
+  align-self: flex-start;
+}
+.logo img {
+  height: 34px;
+}
+.logo-dark {
+  display: none;
+}
+:root[data-theme="dark"] .logo-light {
+  display: none;
+}
+:root[data-theme="dark"] .logo-dark {
+  display: block;
+}

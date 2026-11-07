@@ -1,0 +1,19 @@
+.identity-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  background: var(--bg-scrim);
+}
+.identity-card {
+  position: absolute;
+  z-index: 31;
+  top: 104px;
+  right: var(--space-3);
+  left: var(--space-3);
+  width: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  transform-origin: top right;
+}

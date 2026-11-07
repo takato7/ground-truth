@@ -1,0 +1,57 @@
+.field {
+  width: 100%;
+  padding: 14px var(--space-4);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--bg-input);
+  font-family: inherit;
+  color: var(--fg-primary);
+  resize: none;
+  outline: none;
+  box-shadow: inset 0 0 0 1px var(--border-interior);
+  transition: box-shadow var(--duration-quick);
+}
+.field::placeholder {
+  color: var(--fg-tertiary);
+}
+.field:focus {
+  box-shadow: inset 0 0 0 2px var(--border-focus);
+}
+
+.choice-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.choice {
+  padding: 15px 18px;
+  border-radius: var(--radius-md);
+  background: var(--bg-well);
+  color: var(--fg-primary);
+  transition:
+    background var(--duration-quick),
+    color var(--duration-quick);
+}
+.choice.quiet {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--border-edge);
+  color: var(--fg-secondary);
+}
+.choice.selected {
+  background: var(--bg-invert);
+  color: var(--fg-invert);
+  box-shadow: none;
+}
+
+.option-card {
+  display: flex;
+  gap: 14px;
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+  box-shadow: inset 0 0 0 1px var(--border-interior);
+  transition: box-shadow var(--duration-quick);
+}
+.option-card.selected {
+  box-shadow: inset 0 0 0 2px var(--border-focus);
+}

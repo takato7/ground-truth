@@ -1,0 +1,77 @@
+.sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  background: var(--bg-scrim);
+}
+.sheet {
+  position: absolute;
+  z-index: 21;
+  top: 48px;
+  left: var(--space-2);
+  right: var(--space-2);
+  bottom: var(--space-2);
+  width: auto;
+  display: flex;
+  overflow: hidden;
+  box-shadow: var(--shadow-sheet);
+}
+.sheet-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.sheet-grab {
+  padding: var(--space-2) 14px var(--space-1);
+  touch-action: none;
+  cursor: grab;
+}
+.grabber {
+  display: block;
+  width: 38px;
+  height: 5px;
+  margin: 0 auto var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--border-edge);
+}
+.sheet-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 36px;
+}
+.dots {
+  display: flex;
+  gap: 6px;
+}
+.dots span {
+  width: 22px;
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--track);
+  transition: background var(--duration-quick);
+}
+.dots span.on {
+  background: var(--track-fill);
+}
+.sheet-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 10px 22px var(--space-6);
+}
+.sheet-step {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.sheet-impact {
+  padding: var(--space-3) 14px;
+  border-radius: var(--radius-sm);
+  background: var(--tone-bg);
+  color: var(--tone-fg);
+}
+.sheet-top-spacer {
+  width: 36px;
+}

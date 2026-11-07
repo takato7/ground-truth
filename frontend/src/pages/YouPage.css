@@ -1,0 +1,19 @@
+.you-profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) 0 var(--space-3);
+  text-align: center;
+}
+/* Same height whichever label wraps. */
+.row.you-stats {
+  align-items: stretch;
+}
+.you-stats > * {
+  flex: 1 1 0;
+}
+.you-empty {
+  padding: var(--space-6) 0;
+  text-align: center;
+}

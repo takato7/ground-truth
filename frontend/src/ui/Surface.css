@@ -1,0 +1,29 @@
+.surface {
+  display: block;
+  width: 100%;
+  border-radius: var(--radius-xl);
+  background: var(--tone-bg);
+  color: var(--fg-primary);
+  box-shadow: var(--shadow-raised);
+}
+.surface.pad-none {
+  padding: 0;
+}
+.surface.pad-sm {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+}
+.surface.pad-md {
+  padding: var(--space-4);
+}
+.surface.pad-lg {
+  padding: var(--space-6);
+}
+.surface.elevated {
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-popover);
+}
+.surface.well {
+  background: var(--bg-well);
+  box-shadow: none;
+}

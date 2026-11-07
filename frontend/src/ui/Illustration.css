@@ -1,0 +1,19 @@
+.illo {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+}
+.illo svg {
+  width: 100%;
+  height: 100%;
+}
+.illo-hero {
+  width: 96px;
+  height: 96px;
+}
+/* Beside a line of copy, like a list of amenities. */
+.illo-spot {
+  width: 48px;
+  height: 48px;
+}
