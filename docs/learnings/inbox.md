@@ -47,3 +47,10 @@ Reusable lessons and harness issues, triaged by `/retro`. Add new entries below 
 - What happened: `selftest_needed` looks for changes with `git diff -- .claude` and `git ls-files -o --exclude-standard -- .claude`. Both are empty when `.claude/` is ignored, so it is false and `make check-hooks` always skips the self-test, even after a harness edit. `make check` passing therefore says nothing about the hooks; only `run.sh --all` runs them.
 - Generalised rule: a "did this change?" check must not depend on the path being tracked; when it cannot tell, it runs the check.
 - Suggested target: `.claude/hooks/tests/run.sh`. Do not change the harness during the hackathon.
+
+### A cast on `res.json()` hides a missing field from the type checker
+
+- Source: PR #6 review, `frontend/src/api/health.ts`.
+- What happened: the response was cast to the generated type and only `status` was checked, so a 200 with no count showed success. `tsc` could not see it, because the cast claims the field exists.
+- Generalised rule: when a success state depends on a field, check that field at runtime. A generated type describes the contract, not the bytes that arrived.
+- Suggested target: `.claude/rules/frontend.md` (it currently says to validate `res.json()` by typing it). Do not change the harness during the hackathon.
