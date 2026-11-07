@@ -54,3 +54,7 @@ yarn.lock
 .env.local
 *.key
 *.pem
+
+# Saved copies of the Groundline plan doc (local reference only)
+Groundline*.html
+Groundline*_files/
