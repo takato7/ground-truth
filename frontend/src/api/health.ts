@@ -28,7 +28,11 @@ export async function fetchHealth(): Promise<HealthResult> {
   }
   try {
     const body = (await response.json()) as HealthOk | HealthFailed
-    if (response.status === HTTP_OK && body.status === "ok") {
+    if (
+      response.status === HTTP_OK &&
+      body.status === "ok" &&
+      typeof body.schema_objects === "number"
+    ) {
       return { kind: "ok", health: body }
     }
     if (

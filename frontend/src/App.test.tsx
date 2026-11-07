@@ -68,6 +68,7 @@ test.each([
     new Response("<!doctype html>", { status: HTTP_OK }),
   ],
   ["a 200 that does not say ok", jsonResponse(HEALTH_FAILED, HTTP_OK)],
+  ["a 200 with no count", jsonResponse({ status: "ok", api: "up" }, HTTP_OK)],
 ])("shows an error on %s", async (_name, result) => {
   stubFetch(result)
 
