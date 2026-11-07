@@ -25,6 +25,23 @@
   box-shadow: inset 0 0 0 1px var(--border-edge);
   color: var(--fg-secondary);
 }
+/* Translucent, like a highlighter stroke: it tints whatever it sits on, light or dark. */
+.chip-highlight {
+  background: var(--hl-bg);
+  color: var(--hl-fg);
+}
+.hl-teal {
+  --hl-bg: var(--hl-teal-bg);
+  --hl-fg: var(--hl-teal-fg);
+}
+.hl-coral {
+  --hl-bg: var(--hl-coral-bg);
+  --hl-fg: var(--hl-coral-fg);
+}
+.hl-amber {
+  --hl-bg: var(--hl-amber-bg);
+  --hl-fg: var(--hl-amber-fg);
+}
 .chip-solid {
   padding: 1px 6px;
   font-size: 11px;

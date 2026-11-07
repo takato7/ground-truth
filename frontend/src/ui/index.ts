@@ -2,7 +2,7 @@
 
 export { Button, IconButton, type ButtonVariant } from "./Button"
 export { Callout } from "./Callout"
-export { Badge, Chip } from "./Chip"
+export { Badge, Chip, type Hue } from "./Chip"
 export { cx } from "./cx"
 export { BarList, Meter, Quote, Stat, type BarRow } from "./Data"
 export { ChoiceList, OptionCard, TextField, type Choice } from "./Form"

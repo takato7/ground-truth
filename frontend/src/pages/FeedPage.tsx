@@ -1,7 +1,7 @@
 import { ArrowRight, Inbox } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 import type { ReactNode } from "react"
-import { KIND, KIND_ORDER } from "../components/kind"
+import { KIND_ORDER } from "../components/kind"
 import { QuestionCard } from "../components/QuestionCard"
 import { useStore } from "../data/store"
 import type { Card } from "../data/types"
@@ -9,7 +9,6 @@ import {
   Button,
   Callout,
   CardList,
-  Divider,
   Illustration,
   Page,
   Text,
@@ -56,20 +55,11 @@ export function FeedPage({
   const { open } = useStore()
   const left = open.length
 
-  // One flat list (dividers + cards) so AnimatePresence can reflow everything together.
-  const items = KIND_ORDER.flatMap((kind) => {
-    const cards = open.filter((c) => c.kind === kind)
-    if (!cards.length) return []
-    return [
-      <motion.div
-        key={`divider-${kind}`}
-        layout="position"
-        transition={spring.layout}
-        exit={instant}
-      >
-        <Divider>{KIND[kind].divider}</Divider>
-      </motion.div>,
-      ...cards.map((card) => (
+  // Grouped by kind (risk, triggers, open question last); each card's pill says which it is.
+  const items = KIND_ORDER.flatMap((kind) =>
+    open
+      .filter((c) => c.kind === kind)
+      .map((card) => (
         <motion.div
           key={card.id}
           layout
@@ -85,8 +75,7 @@ export function FeedPage({
           </CardSlot>
         </motion.div>
       )),
-    ]
-  })
+  )
 
   return (
     <Page>

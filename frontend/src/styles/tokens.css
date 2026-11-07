@@ -34,6 +34,9 @@
   --acaps-ink: #1c141c;
 
   --red: #e5484d;
+  /* Opposite the teal on the wheel: highlighter hues for the kind pills. */
+  --coral: #ff6b45;
+  --amber: #f5b500;
 
   /* --- 2. Semantic: light -------------------------------------------------- */
   /* Surface height: canvas (desk behind the phone) < app (screen) < surface (cards) < raised. */
@@ -80,6 +83,14 @@
   --tone-brand-bg: color-mix(in srgb, var(--acaps-teal) 8%, var(--white));
   /* Darkened teal so text on the tint passes contrast. */
   --tone-brand-fg: #016b85;
+
+  /* Highlighter pills (ui/Chip): a see-through wash of the hue, with darker ink of the same hue. */
+  --hl-teal-bg: color-mix(in srgb, var(--acaps-teal) 16%, transparent);
+  --hl-teal-fg: #016b85;
+  --hl-coral-bg: color-mix(in srgb, var(--coral) 18%, transparent);
+  --hl-coral-fg: #b03a1c;
+  --hl-amber-bg: color-mix(in srgb, var(--amber) 26%, transparent);
+  --hl-amber-fg: #7d5a00;
 
   /* Spot illustrations (ui/Illustration): ink outline, teal fill, pale teal, paper. */
   --illo-ink: var(--gray-11);
@@ -148,6 +159,14 @@
 
   --tone-brand-bg: color-mix(in srgb, var(--acaps-teal) 14%, var(--gray-10));
   --tone-brand-fg: #5ccbe6;
+
+  /* Same washes, a touch stronger, with light ink. */
+  --hl-teal-bg: color-mix(in srgb, var(--acaps-teal) 24%, transparent);
+  --hl-teal-fg: #6fd3ec;
+  --hl-coral-bg: color-mix(in srgb, var(--coral) 22%, transparent);
+  --hl-coral-fg: #ff9d82;
+  --hl-amber-bg: color-mix(in srgb, var(--amber) 20%, transparent);
+  --hl-amber-fg: #f5c842;
 
   /* Dark goes to a line style: the outline glows in the light brand teal (it keeps the rays and
      details visible, which dark outlines lose), and the fills drop to deep teal on the app

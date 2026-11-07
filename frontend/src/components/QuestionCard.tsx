@@ -61,7 +61,11 @@ export function QuestionCard({
       onClick={(e) => onOpen(e.currentTarget)}
     >
       <motion.div layout="position" className="qcard-body">
-        <CardMeta pill={KIND[card.kind].pill} date={postDate(card.round)} />
+        <CardMeta
+          pill={KIND[card.kind].pill}
+          hue={KIND[card.kind].hue}
+          date={postDate(card.round)}
+        />
         <div className="qcard-head">
           <Text role="heading">{card.question}</Text>
           {impact && (

@@ -146,7 +146,7 @@ export function ArticleSheet({
             <div className="sheet-step report">
               <div className="stack gap-3">
                 <CardMeta
-                  pill={ARTICLE_PILL[article.kind]}
+                  {...ARTICLE_PILL[article.kind]}
                   date={longDate(article.date)}
                 />
                 <Text as="h2" role="title">

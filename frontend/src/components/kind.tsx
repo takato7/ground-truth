@@ -2,12 +2,16 @@
 
 import { BadgeCheck, EyeOff, type LucideIcon } from "lucide-react"
 import type { CardKind, Identity } from "../data/types"
+import type { Hue } from "../ui"
 
-/** Feed order, divider labels and the pill on each card. */
-export const KIND: Record<CardKind, { divider: string; pill: string }> = {
-  risk: { divider: "Risk", pill: "Risk" },
-  trigger: { divider: "Triggers", pill: "Trigger" },
-  open: { divider: "Open question", pill: "Open question" },
+/**
+ * The pill on each card, and its highlighter colour: coral and amber sit opposite the ACAPS
+ * teal, so a risk, a trigger and an open question read as different things at a glance.
+ */
+export const KIND: Record<CardKind, { pill: string; hue: Hue }> = {
+  risk: { pill: "Risk", hue: "coral" },
+  trigger: { pill: "Trigger", hue: "amber" },
+  open: { pill: "Open question", hue: "teal" },
 }
 export const KIND_ORDER: CardKind[] = ["risk", "trigger", "open"]
 

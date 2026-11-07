@@ -2,21 +2,28 @@ import type { LucideIcon } from "lucide-react"
 import type { ReactNode } from "react"
 import { cx } from "./cx"
 import type { Tone } from "./Surface"
+
+/** Highlighter colours for kind pills: the ACAPS teal and the two warm hues opposite it. */
+export type Hue = "teal" | "coral" | "amber"
 import "./Chip.css"
 
 /**
  * Small rounded label. "tinted" fills with the tone (or sits light on a toned parent),
- * "outline" is a hairline, "solid" is inverted (the "you" marker).
+ * "outline" is a hairline, "solid" is inverted (the "you" marker), "highlight" is a
+ * translucent highlighter mark in one of the kind hues.
  */
 export function Chip({
   variant = "tinted",
   tone,
+  hue,
   icon: Icon,
   onClick,
   children,
 }: {
-  variant?: "tinted" | "outline" | "solid"
+  variant?: "tinted" | "outline" | "solid" | "highlight"
   tone?: Tone
+  /** With variant="highlight". */
+  hue?: Hue
   icon?: LucideIcon
   onClick?: () => void
   children: ReactNode
@@ -25,6 +32,7 @@ export function Chip({
     "chip",
     `chip-${variant}`,
     tone && `tone-${tone} chip-toned`,
+    hue && `hl-${hue}`,
   )
   const body = (
     <>

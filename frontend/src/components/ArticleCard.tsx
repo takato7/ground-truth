@@ -1,14 +1,23 @@
 import { motion } from "motion/react"
 import { reportById } from "../data/reports"
 import type { Article } from "../data/types"
-import { Text, cx, layoutRadius, press, spring, surfaceClass } from "../ui"
+import {
+  Text,
+  cx,
+  type Hue,
+  layoutRadius,
+  press,
+  spring,
+  surfaceClass,
+} from "../ui"
 import { CardMeta, SourceLine, postDate } from "./CardHeader"
 import "./ArticleCard.css"
 
-export const ARTICLE_PILL: Record<Article["kind"], string> = {
-  update: "Update",
-  added: "New risk",
-}
+export const ARTICLE_PILL: Record<Article["kind"], { pill: string; hue: Hue }> =
+  {
+    update: { pill: "Update", hue: "teal" },
+    added: { pill: "New risk", hue: "coral" },
+  }
 
 /**
  * The quoted line under an article's title: the risk an update belongs to, or, for a new
@@ -47,7 +56,7 @@ export function ArticleCard({
     >
       <motion.div layout="position" className="acard-body">
         <CardMeta
-          pill={ARTICLE_PILL[article.kind]}
+          {...ARTICLE_PILL[article.kind]}
           date={postDate(article.date)}
         />
         <Text role="heading" className="clamp-3">

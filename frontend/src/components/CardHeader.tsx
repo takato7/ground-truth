@@ -1,4 +1,4 @@
-import { Chip, Text, cx } from "../ui"
+import { Chip, Text, cx, type Hue } from "../ui"
 import "./CardHeader.css"
 
 /** "2 Nov": the day something was posted. */
@@ -6,10 +6,20 @@ export const postDate = (iso: string) =>
   new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short" })
 
 /** The top row of every card and sheet: what it is, and when. */
-export function CardMeta({ pill, date }: { pill: string; date: string }) {
+export function CardMeta({
+  pill,
+  hue,
+  date,
+}: {
+  pill: string
+  hue: Hue
+  date: string
+}) {
   return (
     <div className="card-meta">
-      <Chip variant="outline">{pill}</Chip>
+      <Chip variant="highlight" hue={hue}>
+        {pill}
+      </Chip>
       <Text as="span" role="meta">
         {date}
       </Text>
