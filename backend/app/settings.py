@@ -6,6 +6,8 @@ from sqlalchemy.engine import make_url
 from sqlalchemy.exc import ArgumentError
 
 IN_MEMORY_DATABASES = {None, "", ":memory:"}
+# SQLite URI forms can also open an in-memory database, so only plain file paths are accepted.
+URI_QUERY_KEYS = {"uri", "mode"}
 
 
 class ConfigError(RuntimeError):
@@ -22,7 +24,10 @@ class Settings(BaseSettings):
             url = make_url(value)
         except ArgumentError as error:
             raise ValueError("not a valid database URL") from error
-        if url.get_backend_name() != "sqlite" or url.database in IN_MEMORY_DATABASES:
+        is_uri_form = (url.database or "").startswith("file:") or bool(
+            URI_QUERY_KEYS & url.query.keys()
+        )
+        if url.get_backend_name() != "sqlite" or url.database in IN_MEMORY_DATABASES or is_uri_form:
             raise ValueError("must be a SQLite file URL, such as sqlite:///./local.db")
         return value
 

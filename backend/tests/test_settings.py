@@ -55,6 +55,8 @@ def test_load_settings_names_a_missing_value(monkeypatch: pytest.MonkeyPatch) ->
         "postgresql://db.example/groundline",
         "sqlite://",  # in memory: every restart would silently lose the data
         "sqlite:///:memory:",
+        "sqlite:///file::memory:?uri=true",
+        "sqlite:///file:x?mode=memory&cache=shared&uri=true",
     ],
 )
 def test_load_settings_names_an_invalid_value(monkeypatch: pytest.MonkeyPatch, url: str) -> None:
