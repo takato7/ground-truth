@@ -58,6 +58,56 @@ print(df["Risk Level"].value_counts())
 
 ---
 
+## Running Groundline
+
+Groundline is the closed expert forum built on this template. The frontend and the API are served from one origin: Vite proxies `/api` to the backend.
+
+### Prerequisites
+
+- Docker with Compose v2, and `make`.
+- For local dev and `make check`: [uv](https://docs.astral.sh/uv/) (Python 3.12) and Node 24. Run `make install` once.
+
+### With Docker
+
+```bash
+cp .env.example .env   # all three values are required
+make up
+```
+
+Open <http://localhost:5181>. `make down` stops the stack.
+
+| Setting | In `.env.example` | Used for |
+|---------|-------------------|----------|
+| `BACKEND_PORT` | `8041` | Backend port, the same inside and outside the container |
+| `FRONTEND_PORT` | `5181` | Frontend port, the same inside and outside the container |
+| `DATABASE_URL` | `sqlite:////data/ground-truth.db` | SQLite file on the `db-data` volume |
+
+A missing or empty value, or a missing `.env` file, stops `make up` with an error naming the value. No port is ever chosen for you.
+
+**Port conflicts.** If another Docker container holds a configured port, `make up` fails with Docker's error naming the port (`Bind for 0.0.0.0:8041 failed: port is already allocated`). The other service may stay up; `make down` clears it. A non-Docker process holding the port may not be detected: on Docker Desktop for macOS, `make up` succeeded with a host listener on 8041. If the app does not answer as expected, check with `lsof -nP -iTCP:8041 -sTCP:LISTEN`.
+
+### Without Docker
+
+```bash
+# Backend. DATABASE_URL is required; the file below is gitignored.
+cd backend && DATABASE_URL=sqlite:///./local.db uv run uvicorn app.main:app --reload --port 8041
+
+# Frontend, in a second terminal. API_PROXY_TARGET is required by the dev server.
+cd frontend && API_PROXY_TARGET=http://localhost:8041 npm run dev -- --port 5181 --strictPort
+```
+
+### Where things live
+
+- **SQLite file:** on the `db-data` volume at `/data` under Docker; at the path in `DATABASE_URL` locally (`backend/local.db` above).
+- **Exported Figma screens:** `frontend/src/screens/exported/`, with mock data in `frontend/src/mocks/`.
+- **OpenAPI document:** `/api/openapi.json`.
+
+### Checks
+
+`make check` runs all quality gates and needs neither Docker nor `.env`. It does need the local `.claude/` harness; without it, use `make check-frontend`.
+
+---
+
 ## What's in the Data
 
 The ACAPS Risk Radar export contains **139 humanitarian risks** across **57 countries**, with the full lifecycle of each risk:

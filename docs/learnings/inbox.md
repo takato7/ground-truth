@@ -13,6 +13,13 @@ Reusable lessons and harness issues, triaged by `/retro`. Add new entries below 
 
 ---
 
+### sandbox.sh's empty HOME hides the docker compose plugin
+
+- Source: issue #2, running `make up` in `.claude/scripts/sandbox.sh` to test a missing env file.
+- What happened: with HOME empty, `docker compose` fails with "unknown command: docker compose", because the plugin is found through `~/.docker`. A compose check in the sandbox therefore fails for the wrong reason. Worked around with an empty `--project-directory` outside the sandbox, not by passing the real HOME.
+- Generalised rule: when a check is meant to fail, read why it failed before counting it as evidence.
+- Suggested target: `.claude/rules/workflow.md`, or a note in `sandbox.sh`. Do not change the harness during the hackathon.
+
 ### sandbox.sh copies the gitignored .claude/ into the sandbox, including its own directory
 
 - Source: application scaffold proposal, reading `.claude/scripts/sandbox.sh` and `.claude/hooks/tests/run.sh`.
