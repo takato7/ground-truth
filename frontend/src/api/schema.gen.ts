@@ -3,10 +3,65 @@
  * Do not make direct changes to the file.
  */
 
-export type paths = Record<string, never>
+export interface paths {
+  "/api/health": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Get Health */
+    get: operations["get_health_api_health_get"]
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+}
 export type webhooks = Record<string, never>
 export interface components {
-  schemas: never
+  schemas: {
+    /**
+     * HealthFailed
+     * @description The API is up, but the database could not be opened or queried.
+     */
+    HealthFailed: {
+      /**
+       * Api
+       * @constant
+       */
+      api: "up"
+      /** Detail */
+      detail: string
+      /**
+       * Status
+       * @constant
+       */
+      status: "database_check_failed"
+    }
+    /**
+     * HealthOk
+     * @description The API is up and the query against the database succeeded.
+     */
+    HealthOk: {
+      /**
+       * Api
+       * @constant
+       */
+      api: "up"
+      /** Schema Objects */
+      schema_objects: number
+      /**
+       * Status
+       * @constant
+       */
+      status: "ok"
+    }
+  }
   responses: never
   parameters: never
   requestBodies: never
@@ -14,4 +69,34 @@ export interface components {
   pathItems: never
 }
 export type $defs = Record<string, never>
-export type operations = Record<string, never>
+export interface operations {
+  get_health_api_health_get: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["HealthOk"]
+        }
+      }
+      /** @description Service Unavailable */
+      503: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["HealthFailed"]
+        }
+      }
+    }
+  }
+}

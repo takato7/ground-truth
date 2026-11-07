@@ -1,8 +1,93 @@
 {
+  "components": {
+    "schemas": {
+      "HealthFailed": {
+        "description": "The API is up, but the database could not be opened or queried.",
+        "properties": {
+          "api": {
+            "const": "up",
+            "title": "Api",
+            "type": "string"
+          },
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "status": {
+            "const": "database_check_failed",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "api",
+          "detail"
+        ],
+        "title": "HealthFailed",
+        "type": "object"
+      },
+      "HealthOk": {
+        "description": "The API is up and the query against the database succeeded.",
+        "properties": {
+          "api": {
+            "const": "up",
+            "title": "Api",
+            "type": "string"
+          },
+          "schema_objects": {
+            "title": "Schema Objects",
+            "type": "integer"
+          },
+          "status": {
+            "const": "ok",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "api",
+          "schema_objects"
+        ],
+        "title": "HealthOk",
+        "type": "object"
+      }
+    }
+  },
   "info": {
     "title": "Groundline API",
     "version": "0.1.0"
   },
   "openapi": "3.1.0",
-  "paths": {}
+  "paths": {
+    "/api/health": {
+      "get": {
+        "operationId": "get_health_api_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthOk"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthFailed"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Get Health"
+      }
+    }
+  }
 }
