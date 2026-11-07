@@ -2,13 +2,13 @@ import { ArrowRight } from "lucide-react"
 import { motion, useDragControls, type PanInfo } from "motion/react"
 import { useEffect, useState, type ReactNode } from "react"
 import { PANEL_RISK, STATS, reportById } from "../data/reports"
+import { sections, withSource } from "../data/share"
 import type { Article } from "../data/types"
 import {
   Button,
   Chip,
   DISMISS,
   Meter,
-  SectionHeader,
   Stat,
   Surface,
   Text,
@@ -21,6 +21,7 @@ import { ARTICLE_PILL, articleSource } from "./ArticleCard"
 import { CardMeta, SourceLine } from "./CardHeader"
 import { SheetTop } from "./CardSheet"
 import { ImpactScale, RiskLevel } from "./RiskMarks"
+import { CopyHeader, ShareBar } from "./ShareBar"
 import "./ArticleSheet.css"
 
 const longDate = (iso: string) =>
@@ -101,6 +102,10 @@ export function ArticleSheet({
   }
   const rated = r.triggers.some((t) => t.completionRate !== null)
   const stats = STATS[article.id]
+  const parts = sections(article, r)
+  const copyable = (title: string, text: string) => (
+    <CopyHeader title={title} text={withSource(r, title, text)} />
+  )
 
   return (
     <>
@@ -149,6 +154,7 @@ export function ArticleSheet({
                 </Text>
                 <SourceLine id={r.id} text={articleSource(article)} full />
               </div>
+              <ShareBar article={article} report={r} />
               {article.body && (
                 <Text className="report-text">{article.body}</Text>
               )}
@@ -164,7 +170,7 @@ export function ArticleSheet({
                 </div>
               )}
 
-              <SectionHeader>About {r.id}</SectionHeader>
+              {copyable(`About ${r.id}`, parts.about)}
               <Surface well pad="sm" className="report-facts">
                 {r.riskLevel && (
                   <Fact label="Risk level">
@@ -193,7 +199,7 @@ export function ArticleSheet({
 
               {r.triggers.length > 0 && (
                 <>
-                  <SectionHeader>Triggers</SectionHeader>
+                  {copyable("Triggers", parts.triggers)}
                   <ul className="stack gap-3">
                     {r.triggers.map((t) => (
                       <Surface
@@ -227,13 +233,13 @@ export function ArticleSheet({
 
               {article.kind === "update" && (
                 <>
-                  <SectionHeader>Rationale</SectionHeader>
+                  {copyable("Rationale", parts.rationale)}
                   <Passage text={r.rationale} sources={r.rationaleSources} />
                 </>
               )}
               {r.expectedImpact && (
                 <>
-                  <SectionHeader>Expected impact</SectionHeader>
+                  {copyable("Expected impact", parts.expectedImpact)}
                   <Passage
                     text={r.expectedImpact}
                     sources={r.expectedImpactSources}

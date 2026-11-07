@@ -27,6 +27,7 @@ export function answerSummary(card: Card, a: Answer) {
  * original title (so it's clear the question comes from their analysis) and, for triggers,
  * ACAPS's completion rate.
  * Answered cards add the answer; one that informed ACAPS is tinted brand with a check.
+ * An unanswered open question is tinted brand too, and shows its prompt instead of the source.
  * Shares `layoutId` with the CardSheet it opens into.
  */
 export function QuestionCard({
@@ -41,13 +42,18 @@ export function QuestionCard({
   onOpen: (el: HTMLElement) => void
 }) {
   const impact = !!answer && !!card.impact
+  // The open question closes the feed: tinted so "nothing above fits?" still has somewhere to go.
+  const invite = card.kind === "open" && !answer
   return (
     <motion.button
       type="button"
       layoutId={layoutId}
       transition={spring.layout}
       className={cx(
-        surfaceClass({ pad: "none", tone: impact ? "brand" : "neutral" }),
+        surfaceClass({
+          pad: "none",
+          tone: impact || invite ? "brand" : "neutral",
+        }),
         "qcard",
       )}
       style={layoutRadius}
@@ -66,7 +72,11 @@ export function QuestionCard({
             />
           )}
         </div>
-        <SourceLine id={card.sourceId} text={card.sourceTitle} />
+        {invite ? (
+          <Text role="meta">{card.context}</Text>
+        ) : (
+          <SourceLine id={card.sourceId} text={card.sourceTitle} />
+        )}
 
         {answer ? (
           <>

@@ -1,6 +1,6 @@
 import { render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { beforeEach, expect, test } from "vitest"
+import { beforeEach, expect, test, vi } from "vitest"
 import { App } from "./App"
 
 const FEED_SIZE = 5
@@ -157,4 +157,46 @@ test("Radar is ACAPS's own posts for the region, and a post opens with the risk 
   expect(within(sheet).getByText("30 September 2026")).toBeInTheDocument()
   expect(within(sheet).getByText("55,000+")).toBeInTheDocument()
   expect(within(sheet).getByText("40% completed")).toBeInTheDocument()
+})
+
+test("a Radar post can be copied whole or by section, emailed or saved as PDF", async () => {
+  const user = await jumpTo(/regular expert/i)
+  const writeText = vi
+    .spyOn(navigator.clipboard, "writeText")
+    .mockResolvedValue(undefined)
+  await user.click(
+    within(newsPage()).getByText(
+      /^The risk remains active, although no significant/,
+    ),
+  )
+  const sheet = screen.getByRole("dialog", {
+    name: /^The risk remains active, although no significant/,
+  })
+  const share = within(sheet).getByRole("group", { name: "Share this post" })
+  for (const name of ["Copy", "Email", "PDF"])
+    expect(within(share).getByRole("button", { name })).toBeInTheDocument()
+
+  await user.click(within(share).getByRole("button", { name: "Copy" }))
+  expect(writeText).toHaveBeenLastCalledWith(
+    expect.stringMatching(/^The risk remains active[\s\S]*ACAPS Risk Radar/),
+  )
+  expect(
+    within(share).getByRole("button", { name: "Copied" }),
+  ).toBeInTheDocument()
+
+  await user.click(within(sheet).getByRole("button", { name: "Copy Triggers" }))
+  expect(writeText).toHaveBeenLastCalledWith(
+    expect.stringMatching(/^Triggers · R1043 \(Chad\)/),
+  )
+})
+
+test("the open question at the end of the feed is tinted and says what to share", async () => {
+  await jumpTo(/first week/i)
+  const card = within(feedPage())
+    .getByText(/Is anything happening in eastern Chad/)
+    .closest("button")!
+  expect(card).toHaveClass("tone-brand")
+  expect(
+    within(card).getByText(/A new group, a price spike/),
+  ).toBeInTheDocument()
 })

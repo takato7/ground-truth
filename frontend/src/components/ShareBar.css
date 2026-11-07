@@ -1,0 +1,29 @@
+.share-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* Same spacing as .report .section-header, with the copy action on the right. */
+.copy-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  margin-bottom: calc(var(--space-1) * -1);
+}
+.copy-header-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 32px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-pill);
+  color: var(--fg-secondary);
+  font-size: 13px;
+}
+.copy-header-btn:hover {
+  background: var(--bg-well);
+  color: var(--fg-primary);
+}

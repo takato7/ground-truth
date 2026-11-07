@@ -299,7 +299,14 @@ export function CardSheet({
         aria-label={card.question}
         layoutId={layoutId}
         transition={spring.layout}
-        className={cx(surfaceClass({ pad: "none" }), "sheet")}
+        className={cx(
+          surfaceClass({
+            pad: "none",
+            // Matches the tinted open-question card it grows out of.
+            tone: card.kind === "open" && !answer ? "brand" : "neutral",
+          }),
+          "sheet",
+        )}
         style={layoutRadius}
         drag="y"
         dragListener={false}
