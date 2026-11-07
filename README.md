@@ -74,7 +74,7 @@ cp .env.example .env   # all three values are required
 make up
 ```
 
-Open <http://localhost:5181>. `make down` stops the stack.
+Open <http://localhost:5181>. `make down` stops the stack; it reads the same required values, so restore `.env` first if you removed a value or the file.
 
 | Setting | In `.env.example` | Used for |
 |---------|-------------------|----------|
@@ -84,7 +84,7 @@ Open <http://localhost:5181>. `make down` stops the stack.
 
 A missing or empty value, or a missing `.env` file, stops `make up` with an error naming the value. No port is ever chosen for you.
 
-**Port conflicts.** If another Docker container holds a configured port, `make up` fails with Docker's error naming the port (`Bind for 0.0.0.0:8041 failed: port is already allocated`). The other service may stay up; `make down` clears it. A non-Docker process holding the port may not be detected: on Docker Desktop for macOS, `make up` succeeded with a host listener on 8041. If the app does not answer as expected, check with `lsof -nP -iTCP:8041 -sTCP:LISTEN`.
+**Port conflicts.** If another Docker container holds a configured port, `make up` fails with Docker's error naming the port (`Bind for 0.0.0.0:8041 failed: port is already allocated`). The other service may stay up; `make down` clears it. A non-Docker process holding the port may not be detected: on Docker Desktop for macOS, `make up` succeeded with a host listener on 8041. If the app does not answer as expected, check with `lsof -nP -iTCP:8041 -iTCP:5181 -sTCP:LISTEN`.
 
 ### Without Docker
 
