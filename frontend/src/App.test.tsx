@@ -24,7 +24,7 @@ async function jumpTo(label: RegExp) {
 }
 
 const feedPage = () => screen.getByLabelText("Feed", { selector: ".page" })
-const newsPage = () => screen.getByLabelText("News", { selector: ".page" })
+const newsPage = () => screen.getByLabelText("Radar", { selector: ".page" })
 
 test("an invited expert sees why it pays off, enters any code, picks how to appear, and lands on the feed", async () => {
   const user = userEvent.setup()
@@ -112,7 +112,7 @@ test("an anonymous expert is told their note goes to ACAPS only", async () => {
   ).toBeInTheDocument()
 })
 
-test("News stays locked for a lapsed expert until they answer one card", async () => {
+test("Radar stays locked for a lapsed expert until they answer one card", async () => {
   const user = await jumpTo(/lapsed/i)
   expect(within(newsPage()).getByText("Update locked")).toBeInTheDocument()
 
@@ -138,7 +138,7 @@ test("a caught-up expert sees an empty feed, their impact, and their standing", 
   expect(within(you).getByText(/kept this trigger at 10%/)).toBeInTheDocument()
 })
 
-test("News is ACAPS's own posts for the region, and a post opens with the risk it belongs to", async () => {
+test("Radar is ACAPS's own posts for the region, and a post opens with the risk it belongs to", async () => {
   const user = await jumpTo(/regular expert/i)
   const news = newsPage()
   expect(

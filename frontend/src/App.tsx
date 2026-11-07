@@ -63,7 +63,7 @@ function Main() {
     },
     {
       id: "news",
-      label: "News",
+      label: "Radar",
       icon: Newspaper,
       content: (
         <NewsPage

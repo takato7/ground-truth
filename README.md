@@ -17,7 +17,7 @@ The demo is built around the brief's live risk, **R1043: Sudan conflict spillove
 **Three pages**
 
 - **Feed**: this week's questions. Each card stands on its own, so an expert answers only what they know about. They can target where ACAPS might be wrong, instead of filling in a whole survey.
-- **News**: ACAPS's latest updates for the region (R1043, R1066, R1055), taken verbatim from the export.
+- **Radar**: ACAPS's latest updates for the region (R1043, R1066, R1055), taken verbatim from the export.
 - **You**: the expert's answer history, and what changed at ACAPS because of it.
 
 **Question types**, all generated from ACAPS's own fields:
@@ -31,7 +31,7 @@ The demo is built around the brief's live risk, **R1043: Sudan conflict spillove
 1. **Answer first.** Peer answers stay hidden until you've answered, so you aren't anchored by the group (Delphi-style).
 2. **See the panel.** After answering you see how the 5–10 experts on the panel split, so you can tell whether others see the same thing.
 3. **See the impact.** The You page shows when a round changed ACAPS's analysis.
-4. **Stay current.** Answering keeps the News page unlocked. Experts who skip a round lose access until they answer again. They get value for their input, not engagement for its own sake.
+4. **Stay current.** Answering keeps the Radar page unlocked. Experts who skip a round lose access until they answer again. They get value for their input, not engagement for its own sake.
 
 **Anonymity** (expert-controlled, can be changed at any time)
 
@@ -50,7 +50,7 @@ npm install
 npm run dev
 ```
 
-The demo bar in the bottom-left corner jumps between seven scenarios: onboarding a new invite, first week, regular expert, halfway through the week, all caught up, lapsed (News locked), and anonymous expert. Any invite code works. State is saved in `localStorage`; **Restart** resets the current scenario.
+The demo bar in the bottom-left corner jumps between seven scenarios: onboarding a new invite, first week, regular expert, halfway through the week, all caught up, lapsed (Radar locked), and anonymous expert. Any invite code works. State is saved in `localStorage`; **Restart** resets the current scenario.
 
 Checks: `npm run lint && npm run typecheck && npm test`.
 

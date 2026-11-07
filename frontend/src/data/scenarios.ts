@@ -95,7 +95,7 @@ export const SCENARIOS = {
     state: { ...base, answers: { ...PAST, ...THIS_WEEK }, goodStanding: true },
   },
   lapsed: {
-    label: "6 · Lapsed (News locked)",
+    label: "6 · Lapsed (Radar locked)",
     state: {
       ...base,
       answers: { "w41-T0619": PAST["w41-T0619"] },
